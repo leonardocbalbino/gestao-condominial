@@ -1,0 +1,25 @@
+{
+  "name": "gestao-condominio",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:bootstrap": "pnpm --filter @condo/api db:bootstrap",
+    "db:migrate": "pnpm --filter @condo/api db:migrate",
+    "db:seed": "pnpm --filter @condo/api db:seed"
+  },
+  "devDependencies": {
+    "eslint": "^10.15.0",
+    "prettier": "^3.10.1",
+    "turbo": "^2.11.11",
+    "typescript": "~5.9.3"
+  }
+}
