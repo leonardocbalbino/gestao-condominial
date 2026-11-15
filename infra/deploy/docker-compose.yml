@@ -1,0 +1,66 @@
+# Ambiente de homologação num servidor compartilhado.
+#   cd infra/deploy && docker compose --env-file .env up -d --build
+# Segredos ficam em infra/deploy/.env (fora do git); veja .env.example.
+# O banco não expõe porta no host; o Mailpit só escuta em 127.0.0.1 (acesso por túnel SSH).
+name: condo
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${MAILPIT_UI_PORT:-8716}:8025'
+
+  # Papéis de banco + migrações. Único serviço com a credencial de superusuário.
+  migrate:
+    build: &api-build
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: condo-api:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: &db-urls
+      DATABASE_ADMIN_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+      DATABASE_OWNER_URL: postgres://app_owner:${DB_OWNER_PASSWORD:?}@postgres:5432/condo
+      DATABASE_URL: postgres://app_user:${DB_APP_PASSWORD:?}@postgres:5432/condo
+      DATABASE_PLATFORM_URL: postgres://app_platform:${DB_PLATFORM_PASSWORD:?}@postgres:5432/condo
+    command: sh -c "node dist/db/scripts/bootstrap.js && node dist/db/scripts/migrate.js"
+    restart: 'no'
+
+  api:
+    image: condo-api:latest
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    environment:
+      PORT: 3333
+      LOG_LEVEL: info
+      TRUST_PROXY: 'false'
+      DATABASE_URL: postgres://app_user:${DB_APP_PASSWORD}@postgres:5432/condo
+      DATABASE_PLATFORM_URL: postgres://app_platform:${DB_PLATFORM_PASSWORD}@postgres:5432/condo
+      JWT_SECRET: ${JWT_SECRET:?}
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?}
+      SMTP_URL: smtp://mailpit:1025
+      APP_WEB_URL: ${APP_WEB_URL:?}
+    ports:
+      - '${API_BIND:-0.0.0.0}:${API_PORT:-8700}:3333'
+
+volumes:
+  pgdata:

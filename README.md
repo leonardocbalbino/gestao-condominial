@@ -52,6 +52,20 @@ pnpm lint && pnpm typecheck && pnpm test
 
 Os testes da API precisam do Postgres do docker-compose. Eles criam e recriam o banco `condo_test` sozinhos. O CI (GitHub Actions) roda formatação, lint, typecheck e testes com Postgres 16 como serviço.
 
+## Homologação (servidor)
+
+`infra/deploy/docker-compose.yml` sobe Postgres, Mailpit, as migrações e a API como projeto Compose `condo`. A imagem da API está em `apps/api/Dockerfile`.
+
+```bash
+cd infra/deploy
+cp .env.example .env   # gere segredos novos; nunca reutilize os de dev
+docker compose up -d --build
+```
+
+- O banco não expõe porta no host.
+- A credencial de superusuário do Postgres só existe no serviço `migrate`.
+- O Mailpit escuta só em `127.0.0.1`; o acesso é por túnel SSH.
+
 ## Decisões principais
 
 ### ORM: Drizzle, com migrações em SQL escritas à mão

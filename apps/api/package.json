@@ -2,6 +2,10 @@
   "name": "@condo/api",
   "version": "0.0.0",
   "private": true,
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
