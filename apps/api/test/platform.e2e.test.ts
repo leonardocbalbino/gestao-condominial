@@ -94,7 +94,11 @@ describe('super admin da plataforma', () => {
 
   it('CNPJ duplicado: 409', async () => {
     const cnpj = randomCnpj();
-    const body = (email: string) => ({ nome: 'G', cnpj, admin: { nome: 'A', email } });
+    const body = (email: string) => ({
+      nome: 'Gestora Duplicada',
+      cnpj,
+      admin: { nome: 'Admin Duplicada', email },
+    });
     expect(
       (
         await t
