@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import { isValidCnpj, normalizeDocument } from './documents';
 
-export const cnpjSchema = z.string().refine(isValidCnpj, 'CNPJ inválido').transform(normalizeDocument);
+export const cnpjSchema = z
+  .string()
+  .refine(isValidCnpj, 'CNPJ inválido')
+  .transform(normalizeDocument);
 
 export const brandingSchema = z.object({
   primaryColor: z

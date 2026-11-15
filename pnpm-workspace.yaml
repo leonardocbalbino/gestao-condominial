@@ -1,3 +1,9 @@
 packages:
   - apps/*
   - packages/*
+
+# Scripts de instalação: só os necessários. Os binários de swc/esbuild vêm por pacotes opcionais.
+allowBuilds:
+  '@swc/core': false
+  esbuild: false
+  protobufjs: false

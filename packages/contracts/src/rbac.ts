@@ -27,8 +27,42 @@ export const createRoleAssignmentRequestSchema = z
     validFrom: z.coerce.date().optional(),
     validUntil: z.coerce.date().optional(),
   })
-  .refine((v) => v.validFrom === undefined || v.validUntil === undefined || v.validUntil > v.validFrom, {
-    message: 'validUntil deve ser posterior a validFrom',
-    path: ['validUntil'],
-  });
+  .refine(
+    (v) => v.validFrom === undefined || v.validUntil === undefined || v.validUntil > v.validFrom,
+    {
+      message: 'validUntil deve ser posterior a validFrom',
+      path: ['validUntil'],
+    },
+  );
 export type CreateRoleAssignmentRequest = z.infer<typeof createRoleAssignmentRequestSchema>;
+
+export interface RoleDto {
+  id: string;
+  key: string;
+  name: string;
+  requiresMfa: boolean;
+  /** Papel de sistema (comum a todas as gestoras) ou customizado pela gestora. */
+  system: boolean;
+  permissions: PermissionKey[];
+}
+
+export interface RoleAssignmentDto {
+  id: string;
+  userId: string;
+  roleId: string;
+  scope: RoleScope;
+  validFrom: string;
+  validUntil: string | null;
+}
+
+export interface MeDto {
+  id: string;
+  email: string;
+  isPlatformAdmin: boolean;
+  mfaEnabled: boolean;
+  gestoras: {
+    id: string;
+    nome: string;
+    roles: { key: string; name: string; scope: RoleScope }[];
+  }[];
+}
