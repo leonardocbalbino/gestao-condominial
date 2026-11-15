@@ -26,21 +26,21 @@ Você é um engenheiro de software sênior construindo um SaaS multi-tenant de g
 
 ## 2. Stack obrigatória
 
-| Camada | Tecnologia |
-| --- | --- |
-| Monorepo | pnpm workspaces + Turborepo |
-| Backend | Node.js 22 + TypeScript (strict) + NestJS, **monólito modular** |
-| ORM / migrações | Prisma **ou** Drizzle (escolha um e justifique no README); migrações versionadas |
-| Banco | PostgreSQL 16 com Row-Level Security e extensão `ltree` |
-| Filas | Redis + BullMQ, com padrão **transactional outbox** |
-| Arquivos | Storage S3-compatível (MinIO em dev) com versionamento |
-| Web | Next.js (App Router) + Tailwind, mobile-first |
-| Mobile | React Native + Expo (iOS e Android), Expo Router |
+| Camada           | Tecnologia                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo         | pnpm workspaces + Turborepo                                                                                                           |
+| Backend          | Node.js 22 + TypeScript (strict) + NestJS, **monólito modular**                                                                       |
+| ORM / migrações  | Prisma **ou** Drizzle (escolha um e justifique no README); migrações versionadas                                                      |
+| Banco            | PostgreSQL 16 com Row-Level Security e extensão `ltree`                                                                               |
+| Filas            | Redis + BullMQ, com padrão **transactional outbox**                                                                                   |
+| Arquivos         | Storage S3-compatível (MinIO em dev) com versionamento                                                                                |
+| Web              | Next.js (App Router) + Tailwind, mobile-first                                                                                         |
+| Mobile           | React Native + Expo (iOS e Android), Expo Router                                                                                      |
 | UI compartilhada | Pacote `packages/ui` com tokens de design (cores, tipografia, espaçamento) usados por web e mobile; suporte a white label por gestora |
-| Validação | Zod nos contratos compartilhados (`packages/contracts`) |
-| Testes | Vitest/Jest (unit), Supertest (API), Playwright (web), testes de isolamento de tenant |
-| Observabilidade | OpenTelemetry + logs estruturados (pino) |
-| Dev local | Docker Compose (Postgres, Redis, MinIO, Mailpit) |
+| Validação        | Zod nos contratos compartilhados (`packages/contracts`)                                                                               |
+| Testes           | Vitest/Jest (unit), Supertest (API), Playwright (web), testes de isolamento de tenant                                                 |
+| Observabilidade  | OpenTelemetry + logs estruturados (pino)                                                                                              |
+| Dev local        | Docker Compose (Postgres, Redis, MinIO, Mailpit)                                                                                      |
 
 ### Estrutura de pastas
 
@@ -80,36 +80,36 @@ Regra: um módulo **não acessa tabelas de outro**. Comunicação entre módulos
 
 ## 4. Modelo de dados (mínimo)
 
-| Entidade | Campos principais |
-| --- | --- |
-| `gestora` | id, nome, cnpj, branding (logo, cores, domínio) |
-| `condominio` | id, gestora_id, nome, cnpj, endereço, config (módulos ligados, regras de rateio, multa/juros, limites de aprovação, regras de locação/vagas), provider_account_id |
-| `block` | id, condominio_id, nome (Torre A, Bloco 2), andares |
-| `unit` | id, condominio_id, block_id, andar, numero, tipo (apto, casa, sala, loja), fracao_ideal |
-| `person` | id, gestora_id, cpf, nome, telefone, email |
-| `vehicle` | id, unit_id, placa, modelo, cor |
-| `user` | id, person_id, auth (senha hash, 2FA, biometria/link mágico) |
-| `role` / `permission` / `role_assignment` | papéis como dados; atribuição = user + role + escopo (gestora, condominio ou unit) + validade |
-| `unit_access_grant` | unit_id, person_id, perfil (proprietário, secundário, inquilino, dependente, hóspede), permissões marcadas (avisos, reservas, portaria, pagamento, contas), concedido_por, início, fim, status do convite |
-| `account` | plano de contas: código, nome, natureza, grupo (ordinária, fundo de reserva, obras) |
-| `journal_entry` / `journal_line` | data competência, data caixa, histórico, period_id, created_by; linhas débito/crédito |
-| `attachment` | entry_id, tipo, sha256, storage_key |
-| `budget` / `budget_line` | previsão orçamentária anual por conta |
-| `charge` / `charge_item` | unit_id, competência, vencimento, valor, status, provider_charge_id; itens apontando para contas |
-| `payment_event` | provider, event_id (único), payload, recebido_em, processado_em |
-| `bank_statement_line` | data, valor, descrição, match_entry_id |
-| `accounting_period` | condominio_id, mês, status (aberto, em_revisao, aprovado, publicado), hash |
-| `review_item` / `review_comment` / `approval` | revisão do conselho por lançamento (ok, dúvida, ressalva) e assinaturas |
-| `lease_contract` | unit_id, tipo (longa, temporada), pessoas, início, fim, responsável pela taxa, status, anexo |
-| `guest_stay` | lease_contract_id, hóspedes (nome, documento), veículos, check-in, check-out |
-| `parking_space` | condominio_id, identificação, tipo (fixa, rotativa, extra, visitante), unidade dona |
-| `parking_assignment` | space_id, beneficiário (unit/person), modalidade (cessão, aluguel entre condôminos, aluguel do condomínio), valor, início, fim, aprovado_por |
-| `amenity` / `reservation` | áreas comuns, regras, reservas, taxa, caução |
-| `visitor_pass` | unit_id, nome, validade, QR, entrada/saída |
-| `service_provider` | do condomínio (CNPJ, contrato, documentos com validade) ou da unidade (dias/horários liberados) |
-| `announcement` / `announcement_read` | comunicados e confirmação de leitura |
-| `home_preference` | user_id, ordem e visibilidade dos cards |
-| `audit_log` | ator, ação, recurso, before, after, ip, prev_hash, hash |
+| Entidade                                      | Campos principais                                                                                                                                                                                         |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gestora`                                     | id, nome, cnpj, branding (logo, cores, domínio)                                                                                                                                                           |
+| `condominio`                                  | id, gestora_id, nome, cnpj, endereço, config (módulos ligados, regras de rateio, multa/juros, limites de aprovação, regras de locação/vagas), provider_account_id                                         |
+| `block`                                       | id, condominio_id, nome (Torre A, Bloco 2), andares                                                                                                                                                       |
+| `unit`                                        | id, condominio_id, block_id, andar, numero, tipo (apto, casa, sala, loja), fracao_ideal                                                                                                                   |
+| `person`                                      | id, gestora_id, cpf, nome, telefone, email                                                                                                                                                                |
+| `vehicle`                                     | id, unit_id, placa, modelo, cor                                                                                                                                                                           |
+| `user`                                        | id, person_id, auth (senha hash, 2FA, biometria/link mágico)                                                                                                                                              |
+| `role` / `permission` / `role_assignment`     | papéis como dados; atribuição = user + role + escopo (gestora, condominio ou unit) + validade                                                                                                             |
+| `unit_access_grant`                           | unit_id, person_id, perfil (proprietário, secundário, inquilino, dependente, hóspede), permissões marcadas (avisos, reservas, portaria, pagamento, contas), concedido_por, início, fim, status do convite |
+| `account`                                     | plano de contas: código, nome, natureza, grupo (ordinária, fundo de reserva, obras)                                                                                                                       |
+| `journal_entry` / `journal_line`              | data competência, data caixa, histórico, period_id, created_by; linhas débito/crédito                                                                                                                     |
+| `attachment`                                  | entry_id, tipo, sha256, storage_key                                                                                                                                                                       |
+| `budget` / `budget_line`                      | previsão orçamentária anual por conta                                                                                                                                                                     |
+| `charge` / `charge_item`                      | unit_id, competência, vencimento, valor, status, provider_charge_id; itens apontando para contas                                                                                                          |
+| `payment_event`                               | provider, event_id (único), payload, recebido_em, processado_em                                                                                                                                           |
+| `bank_statement_line`                         | data, valor, descrição, match_entry_id                                                                                                                                                                    |
+| `accounting_period`                           | condominio_id, mês, status (aberto, em_revisao, aprovado, publicado), hash                                                                                                                                |
+| `review_item` / `review_comment` / `approval` | revisão do conselho por lançamento (ok, dúvida, ressalva) e assinaturas                                                                                                                                   |
+| `lease_contract`                              | unit_id, tipo (longa, temporada), pessoas, início, fim, responsável pela taxa, status, anexo                                                                                                              |
+| `guest_stay`                                  | lease_contract_id, hóspedes (nome, documento), veículos, check-in, check-out                                                                                                                              |
+| `parking_space`                               | condominio_id, identificação, tipo (fixa, rotativa, extra, visitante), unidade dona                                                                                                                       |
+| `parking_assignment`                          | space_id, beneficiário (unit/person), modalidade (cessão, aluguel entre condôminos, aluguel do condomínio), valor, início, fim, aprovado_por                                                              |
+| `amenity` / `reservation`                     | áreas comuns, regras, reservas, taxa, caução                                                                                                                                                              |
+| `visitor_pass`                                | unit_id, nome, validade, QR, entrada/saída                                                                                                                                                                |
+| `service_provider`                            | do condomínio (CNPJ, contrato, documentos com validade) ou da unidade (dias/horários liberados)                                                                                                           |
+| `announcement` / `announcement_read`          | comunicados e confirmação de leitura                                                                                                                                                                      |
+| `home_preference`                             | user_id, ordem e visibilidade dos cards                                                                                                                                                                   |
+| `audit_log`                                   | ator, ação, recurso, before, after, ip, prev_hash, hash                                                                                                                                                   |
 
 ## 5. Broker de pagamento
 
@@ -177,18 +177,18 @@ Permissões: gestora tudo; síndico cadastra, aprova e vê painel; conselho leit
 
 ## 9. Matriz de permissões base
 
-| Ação | Gestora | Síndico | Conselho | Morador |
-| --- | --- | --- | --- | --- |
-| Criar condomínio / convidar síndico e conselho | Sim | Não | Não | Não |
-| Convidar moradores | Sim | Sim | Não | Não |
-| Lançar receitas e despesas | Sim | Configurável | Não | Não |
-| Aprovar pagamento acima do limite | Não | Sim | 2ª assinatura (config.) | Não |
-| Fechar o mês | Sim | Não | Não | Não |
-| Revisar/aprovar prestação de contas | Leitura | Assina | Aprova ou ressalva | Não |
-| Inadimplência nominal | Sim | Sim | Sim | Não (agregado) |
-| Balancete e pasta publicados | Sim | Sim | Sim | Sim |
-| Boletos e extrato da própria unidade | — | — | — | Sim |
-| Ver todos os condomínios | Sim | Não | Não | Não |
+| Ação                                           | Gestora | Síndico      | Conselho                | Morador        |
+| ---------------------------------------------- | ------- | ------------ | ----------------------- | -------------- |
+| Criar condomínio / convidar síndico e conselho | Sim     | Não          | Não                     | Não            |
+| Convidar moradores                             | Sim     | Sim          | Não                     | Não            |
+| Lançar receitas e despesas                     | Sim     | Configurável | Não                     | Não            |
+| Aprovar pagamento acima do limite              | Não     | Sim          | 2ª assinatura (config.) | Não            |
+| Fechar o mês                                   | Sim     | Não          | Não                     | Não            |
+| Revisar/aprovar prestação de contas            | Leitura | Assina       | Aprova ou ressalva      | Não            |
+| Inadimplência nominal                          | Sim     | Sim          | Sim                     | Não (agregado) |
+| Balancete e pasta publicados                   | Sim     | Sim          | Sim                     | Sim            |
+| Boletos e extrato da própria unidade           | —       | —            | —                       | Sim            |
+| Ver todos os condomínios                       | Sim     | Não          | Não                     | Não            |
 
 Papéis são dados: a gestora pode criar papéis customizados (assistente financeiro, zelador, porteiro) a partir de permissões granulares.
 
@@ -197,6 +197,7 @@ Papéis são dados: a gestora pode criar papéis customizados (assistente financ
 Para cada fase: escreva um ADR curto em `docs/adr/` se tomar decisão relevante, implemente com testes, rode `pnpm lint && pnpm test`, atualize o README e **pare para revisão**.
 
 ### Fase 0 — Fundação
+
 - Monorepo, Docker Compose, CI (lint, typecheck, testes).
 - Tenancy com RLS + testes de isolamento.
 - Auth (senha + 2FA para staff, link mágico para morador), RBAC com escopo, `can()` central, guards no NestJS.
@@ -206,6 +207,7 @@ Para cada fase: escreva um ADR curto em `docs/adr/` se tomar decisão relevante,
 **Aceite:** teste prova que gestora A não lê dados da gestora B; login com 2FA funciona; toda mutação gera linha de auditoria.
 
 ### Fase 1 — MVP financeiro + web responsivo + app mobile
+
 - Cadastro: condomínio, torres/blocos (com geração automática "Torre A, 10 andares, 4 por andar" e importação CSV), unidades, pessoas, veículos.
 - Plano de contas padrão por gestora, orçamento anual, rateio (fração ideal, igualitário, misto).
 - `PaymentProvider` + adaptadores Asaas (sandbox) e Fake; subconta por condomínio.
@@ -217,6 +219,7 @@ Para cada fase: escreva um ADR curto em `docs/adr/` se tomar decisão relevante,
 **Aceite:** fluxo ponta a ponta com o adaptador Fake — gerar rateio, emitir cobrança, simular pagamento por webhook (incluindo webhook duplicado), ver baixa, conciliar e fechar o mês com balancete correto.
 
 ### Fase 2 — Prestação de contas completa
+
 - Revisão do conselho por lançamento, comentários, ressalva → estorno → reabertura.
 - Assinatura do síndico, publicação, pasta digital em PDF.
 - Portal de transparência (web e app).
@@ -226,6 +229,7 @@ Para cada fase: escreva um ADR curto em `docs/adr/` se tomar decisão relevante,
 **Aceite:** um mês sai de "aberto" até "publicado" passando por uma ressalva; o PDF contém todos os comprovantes na ordem; morador vê só agregado de inadimplência.
 
 ### Fase 3 — Engajamento e operação
+
 - Personalização de cards (ocultar/reordenar) em todos os perfis.
 - Acessos na unidade: secundários, inquilino com convite e permissões por contrato, expiração automática.
 - Reservas, gestão de garagem (mapa, cessão, aluguel), locações (longa e temporada) no painel do síndico, liberação de visitas por QR, prestadores, encomendas, chamados, documentos.
@@ -235,6 +239,7 @@ Para cada fase: escreva um ADR curto em `docs/adr/` se tomar decisão relevante,
 **Aceite:** proprietário cadastra inquilino com permissão de pagamento → boleto passa a ir para o inquilino → proprietário recebe aviso de atraso → acesso expira na data de fim. Vaga não pode ser cedida a não condômino sem a flag do condomínio.
 
 ### Fase 4 — Expansão
+
 - Assembleia online com votação por fração ideal, consumo (água/gás), segundo provedor de pagamento, importação de outros sistemas, BI consolidado da gestora.
 
 ## 11. Como trabalhar
