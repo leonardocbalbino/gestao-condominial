@@ -121,6 +121,22 @@ services:
     ports:
       - '${API_BIND:-0.0.0.0}:${API_PORT:-8700}:3333'
 
+  # Painel e portal do morador. Fala com a API pela rede interna (BFF).
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    image: condo-web:latest
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      API_URL: http://api:3333
+      # Homologação por HTTP: cookie sem `secure`. Com HTTPS, troque para true.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - '${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8701}:3000'
+
 volumes:
   pgdata:
   miniodata:

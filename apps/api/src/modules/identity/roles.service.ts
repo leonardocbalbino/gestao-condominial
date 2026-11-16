@@ -9,6 +9,7 @@ import type {
   AssignedScope,
   CreateRoleAssignmentRequest,
   CreateRoleRequest,
+  InviteCondominioStaffRequest,
   PermissionKey,
   RoleAssignmentDto,
   RoleDto,
@@ -21,6 +22,8 @@ import { currentContext } from '../../db/request-context';
 import { role, roleAssignment, rolePermission } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
 import { CondominioService } from '../org/condominio.service';
+import { PersonService } from '../org/person.service';
+import { MagicLinkService } from './magic-link.service';
 import { AuthorizationService, type AuthorizationTarget } from './authorization.service';
 import { condominioScope, gestoraScope, parseScope, unitScope } from './scope';
 import { UsersService } from './users.service';
@@ -53,6 +56,8 @@ export class RolesService {
     private readonly audit: AuditService,
     private readonly users: UsersService,
     private readonly condominios: CondominioService,
+    private readonly persons: PersonService,
+    private readonly magicLinks: MagicLinkService,
   ) {}
 
   /** Papéis de sistema + papéis customizados da gestora em contexto. */
@@ -164,6 +169,49 @@ export class RolesService {
       scope: { type: 'gestora' },
       grantedBy: actorId,
     });
+  }
+
+  /**
+   * Convida síndico ou conselheiro: cria o login se preciso, registra a pessoa na gestora,
+   * atribui o papel no escopo do condomínio e envia o link de acesso (o 2FA é configurado
+   * no primeiro acesso). Mesmas regras de /role-assignments: role:manage no escopo e nada
+   * de atribuir papel a si mesmo.
+   */
+  async inviteCondominioStaff(
+    condominioId: string,
+    input: InviteCondominioStaffRequest,
+  ): Promise<RoleAssignmentDto> {
+    const { tx, gestoraId, userId: actorId } = currentContext();
+    if (!gestoraId) throw new Error('Convite exige gestora em contexto');
+    const target = await this.resolveTarget(gestoraId, { type: 'condominio', condominioId });
+    const [roleRow] = await tx
+      .select()
+      .from(role)
+      .where(and(isNull(role.gestoraId), eq(role.key, input.papel)));
+    if (!roleRow) throw new Error(`Papel de sistema inexistente: ${input.papel}`);
+    if (!(await this.authz.holdsAll(mustHold(await this.permissionsOf(roleRow.id)), target))) {
+      throw new ForbiddenException('O papel inclui permissões que você não possui neste escopo');
+    }
+
+    const user = await this.users.findOrCreateByEmail(input.email);
+    if (user.id === actorId)
+      throw new ForbiddenException('Você não pode atribuir papéis a si mesmo');
+    await this.persons.ensure({ gestoraId, userId: user.id, nome: input.nome, email: user.email });
+    const dto = await this.insertAssignment({
+      gestoraId,
+      userId: user.id,
+      role: roleRow,
+      scope: { type: 'condominio', condominioId },
+      grantedBy: actorId,
+    });
+    await this.magicLinks.issue(user.id, user.email, 'invite');
+    await this.audit.record({
+      action: 'role_assignment.invited',
+      resourceType: 'role_assignment',
+      resourceId: dto.id,
+      after: { ...dto, papel: input.papel },
+    });
+    return dto;
   }
 
   /**

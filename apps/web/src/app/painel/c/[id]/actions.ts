@@ -96,6 +96,16 @@ export async function setupLedgerAction(id: string, _: ActionState, form: FormDa
   );
 }
 
+export async function inviteStaffAction(id: string, _: ActionState, form: FormData) {
+  return run(`/painel/c/${id}`, 'Convite enviado por e-mail.', () =>
+    call(`/condominios/${id}/staff-invites`, 'POST', {
+      nome: text(form, 'nome'),
+      email: text(form, 'email'),
+      papel: text(form, 'papel'),
+    }),
+  );
+}
+
 // --- Unidades ----------------------------------------------------------------
 
 export async function generateBlockAction(id: string, _: ActionState, form: FormData) {

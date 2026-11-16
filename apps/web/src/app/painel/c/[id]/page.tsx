@@ -4,12 +4,17 @@ import {
   type PaymentAccountDto,
   type PeriodDto,
 } from '@condo/contracts';
-import { BookOpen, Landmark, Save, Settings } from 'lucide-react';
+import { BookOpen, Landmark, Save, Settings, UserPlus } from 'lucide-react';
 import { ActionForm, SubmitButton } from '@/components/action-form';
-import { Card, Field } from '@/components/ui';
+import { Card, Field, SelectField } from '@/components/ui';
 import { todayMonth } from '@/lib/dates';
 import { load } from '@/lib/load';
-import { activateAccountAction, setupLedgerAction, updateConfigAction } from './actions';
+import {
+  activateAccountAction,
+  inviteStaffAction,
+  setupLedgerAction,
+  updateConfigAction,
+} from './actions';
 
 const pct = (bp: number) => (bp / 100).toLocaleString('pt-BR');
 
@@ -23,6 +28,23 @@ export default async function VisaoGeralPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+          <UserPlus aria-hidden /> Convidar síndico ou conselheiro
+        </h2>
+        <ActionForm action={inviteStaffAction.bind(null, id)}>
+          <Field label="Nome" name="nome" required />
+          <Field label="E-mail" name="email" type="email" required />
+          <SelectField label="Papel" name="papel" defaultValue="sindico">
+            <option value="sindico">Síndico</option>
+            <option value="conselheiro">Conselheiro</option>
+          </SelectField>
+          <SubmitButton>
+            <UserPlus aria-hidden /> Enviar convite
+          </SubmitButton>
+        </ActionForm>
+      </Card>
+
       <Card>
         <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
           <BookOpen aria-hidden /> Contabilidade

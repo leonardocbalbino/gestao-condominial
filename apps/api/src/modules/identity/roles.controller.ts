@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import {
   createRoleAssignmentRequestSchema,
   createRoleRequestSchema,
+  inviteCondominioStaffRequestSchema,
   type CreateRoleAssignmentRequest,
   type CreateRoleRequest,
+  type InviteCondominioStaffRequest,
   type RoleAssignmentDto,
   type RoleDto,
 } from '@condo/contracts';
@@ -34,5 +36,15 @@ export class RolesController {
     @Body(new ZodPipe(createRoleAssignmentRequestSchema)) body: CreateRoleAssignmentRequest,
   ): Promise<RoleAssignmentDto> {
     return this.roles.assign(body);
+  }
+
+  /** Gestora convida síndico ou conselheiro do condomínio por e-mail (matriz §9). */
+  @Post('condominios/:condominioId/staff-invites')
+  @RequirePermission('role:manage', { type: 'condominio', param: 'condominioId' })
+  invite(
+    @Param('condominioId') condominioId: string,
+    @Body(new ZodPipe(inviteCondominioStaffRequestSchema)) body: InviteCondominioStaffRequest,
+  ): Promise<RoleAssignmentDto> {
+    return this.roles.inviteCondominioStaff(condominioId, body);
   }
 }

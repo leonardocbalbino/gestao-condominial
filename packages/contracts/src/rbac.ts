@@ -43,6 +43,17 @@ export const createRoleAssignmentRequestSchema = z
   );
 export type CreateRoleAssignmentRequest = z.infer<typeof createRoleAssignmentRequestSchema>;
 
+/**
+ * Convite de síndico ou conselheiro para um condomínio (matriz §9: a gestora convida).
+ * Cria o login se ainda não existir e envia o link de acesso por e-mail.
+ */
+export const inviteCondominioStaffRequestSchema = z.object({
+  nome: z.string().trim().min(2).max(200),
+  email: z.email().transform((v) => v.toLowerCase()),
+  papel: z.enum(['sindico', 'conselheiro']),
+});
+export type InviteCondominioStaffRequest = z.infer<typeof inviteCondominioStaffRequestSchema>;
+
 export interface RoleDto {
   id: string;
   key: string;

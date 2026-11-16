@@ -1,8 +1,11 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 const config: NextConfig = {
-  // Imagem enxuta para o Docker (server.js + dependências mínimas).
+  // Imagem enxuta para o Docker (server.js + dependências mínimas). A raiz do rastreio é
+  // o monorepo, para incluir @condo/contracts e @condo/ui.
   output: 'standalone',
+  outputFileTracingRoot: path.resolve(process.cwd(), '../..'),
   poweredByHeader: false,
   async headers() {
     return [

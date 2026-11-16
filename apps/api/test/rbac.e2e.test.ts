@@ -8,6 +8,7 @@ import {
   createUser,
   randomCnpj,
   testPools,
+  uniqueEmail,
   type TestUser,
 } from './support/db';
 
@@ -313,6 +314,30 @@ describe('papéis customizados e anti-escalada', () => {
       });
     expect(self.status).toBe(403);
     expect(self.body.message).toMatch(/si mesmo/);
+  });
+
+  it('gestora convida síndico por e-mail: cria o login, atribui no condomínio e envia o link', async () => {
+    const email = uniqueEmail('sindico-convidado');
+    const res = await t
+      .http()
+      .post(`/condominios/${condoA1}/staff-invites`)
+      .set(auth(adminToken, gestoraA))
+      .send({ nome: 'Síndica Convidada', email, papel: 'sindico' });
+    expect(res.status).toBe(201);
+    expect(res.body.scope).toEqual({ type: 'condominio', condominioId: condoA1 });
+
+    const consumed = await t
+      .http()
+      .post('/auth/magic-link/consume')
+      .send({ token: t.mailer.lastTokenFor(email) });
+    expect(consumed.body.status).toBe('mfa_enrollment_required');
+
+    const self = await t
+      .http()
+      .post(`/condominios/${condoA1}/staff-invites`)
+      .set(auth(adminToken, gestoraA))
+      .send({ nome: 'Eu', email: admin.email, papel: 'conselheiro' });
+    expect(self.status).toBe(403);
   });
 
   it('não atribui escopo em condomínio de outra gestora', async () => {
