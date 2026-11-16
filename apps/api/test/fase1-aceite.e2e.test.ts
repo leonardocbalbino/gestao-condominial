@@ -228,7 +228,7 @@ describe('rateio e emissão', () => {
 
 describe('pagamento por webhook', () => {
   let chargeId: string;
-  let delivery: { path: string; headers: Record<string, string>; body: unknown };
+  let delivery: { path: string; headers: Record<string, string>; body: object };
 
   beforeAll(async () => {
     const charges = await t.http().get(`${base()}/charges`).query({ competencia }).set(auth(admin));
