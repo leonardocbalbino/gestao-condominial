@@ -45,7 +45,7 @@ export class HomeService {
     return {
       condominioNome: condominio.nome,
       unidade: describeUnit(unit),
-      primeiroNome: nome?.trim().split(/s+/)[0] ?? null,
+      primeiroNome: nome?.trim().split(/\s+/)[0] ?? null,
       pendencia: pickPendencia(charges, todayInBrazil()),
       comunicadosNaoLidos: announcements.filter((a) => !a.lido),
       avisosDoDia: [],
