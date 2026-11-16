@@ -10,6 +10,7 @@ import { AuthGuard } from './http/auth.guard';
 import { RequestPipelineInterceptor } from './http/request-pipeline.interceptor';
 import { AuditModule } from './modules/audit/audit.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { CommunicationModule } from './modules/communication/communication.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { OutboxModule } from './outbox/outbox.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -63,6 +64,7 @@ const REQUEST_ID = /^[\w-]{8,64}$/;
     DocumentsModule,
     LedgerModule,
     BillingModule,
+    CommunicationModule,
     PlatformModule,
   ],
   providers: [

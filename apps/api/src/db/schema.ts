@@ -476,6 +476,33 @@ export const bankStatementLine = pgTable('bank_statement_line', {
   createdAt: createdAt(),
 });
 
+// ---------------------------------------------------------------------------
+// 0005 — comunicados
+// ---------------------------------------------------------------------------
+
+export const announcement = pgTable('announcement', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  titulo: text('titulo').notNull(),
+  corpo: text('corpo').notNull(),
+  publicadoPor: uuid('publicado_por'),
+  publicadoEm: timestamp('publicado_em', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: createdAt(),
+});
+
+export const announcementRead = pgTable(
+  'announcement_read',
+  {
+    announcementId: uuid('announcement_id').notNull(),
+    userId: uuid('user_id').notNull(),
+    gestoraId: uuid('gestora_id').notNull(),
+    condominioId: uuid('condominio_id').notNull(),
+    lidoEm: timestamp('lido_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.announcementId, t.userId] })],
+);
+
 export const schema = {
   gestora,
   appUser,
@@ -506,4 +533,6 @@ export const schema = {
   paymentEvent,
   payable,
   bankStatementLine,
+  announcement,
+  announcementRead,
 };

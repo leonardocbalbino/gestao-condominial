@@ -5,7 +5,7 @@ import type {
   StatementLineDto,
 } from '@condo/contracts';
 import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
-import { nextMonth, todayInBrazil } from '../../common/dates';
+import { dateInBrazil, nextMonth, todayInBrazil } from '../../common/dates';
 import { APP_DB, PLATFORM_DB } from '../../db/database.module';
 import { currentContext, runInContext, type Database } from '../../db/request-context';
 import { bankStatementLine } from '../../db/schema';
@@ -70,7 +70,7 @@ export class ReconciliationService implements OnModuleInit {
     const creds = await this.paymentAccounts.credentials(condominioId);
     const today = todayInBrazil();
     // Reimporta o último dia já lido: linhas repetidas são ignoradas pela chave única.
-    const from = cursor.extratoAte ?? cursor.createdAt.toISOString().slice(0, 10);
+    const from = cursor.extratoAte ?? dateInBrazil(cursor.createdAt);
     const entries = await this.provider.listStatement(creds, from, today);
 
     const { tx, gestoraId } = currentContext();

@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './billing';
 export * from './cadastro';
+export * from './communication';
 export * from './documents';
 export * from './ledger';
 export * from './org';
