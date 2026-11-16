@@ -4,9 +4,10 @@ import {
   nomeDoMes,
   type ChargeDto,
   type CondominioDto,
+  type ImplantacaoDto,
+  type ImplantacaoPasso,
   type InadimplenciaDto,
   type PayableDto,
-  type PaymentAccountDto,
   type PeriodDto,
   type PeriodStatus,
   type StatementLineDto,
@@ -49,6 +50,14 @@ const prestacaoChip: Record<PeriodStatus, ChipStatus> = {
 
 const AGUARDANDO: PayableDto['status'][] = ['aguardando_aprovacao', 'aguardando_segunda_aprovacao'];
 
+const PASSO_ROTULO: Record<ImplantacaoPasso, string> = {
+  unidades: 'unidades',
+  conta: 'conta de pagamentos',
+  contabilidade: 'contabilidade',
+  equipe: 'síndico',
+  cobranca: 'primeira cobrança',
+};
+
 /** "—" com explicação ao passar o mouse: ausência de dado nunca vira zero. */
 function SemDado({ motivo }: { motivo: string }) {
   return (
@@ -64,9 +73,9 @@ function SemDado({ motivo }: { motivo: string }) {
  */
 async function resumo(c: CondominioDto, mes: string, mesAnterior: string) {
   const base = `/condominios/${c.id}`;
-  const [units, account, charges, atrasos, periods, linhas, payables] = await Promise.all([
+  const [implantacao, units, charges, atrasos, periods, linhas, payables] = await Promise.all([
+    load<ImplantacaoDto>(`${base}/implantacao`),
     load<UnitDto[]>(`${base}/units`),
-    load<PaymentAccountDto>(`${base}/billing/account`),
     load<ChargeDto[]>(`${base}/charges?competencia=${mes}`),
     load<InadimplenciaDto[]>(`${base}/charges/inadimplencia`),
     load<PeriodDto[]>(`${base}/ledger/periods`),
@@ -74,12 +83,10 @@ async function resumo(c: CondominioDto, mes: string, mesAnterior: string) {
     load<PayableDto[]>(`${base}/payables`),
   ]);
   const unidades = units?.length ?? 0;
-  // Passos da implantação ainda pendentes (a Etapa 4 traz isso da API).
-  const faltando = [
-    unidades === 0 && 'unidades',
-    !account && 'conta de pagamentos',
-    (periods ?? []).length === 0 && 'contabilidade',
-  ].filter((x): x is string => Boolean(x));
+  // Passos pendentes vêm da API (mesma regra da Visão geral), não de quem pode ver o quê.
+  const faltando = (implantacao?.passos ?? [])
+    .filter((p) => !p.concluido)
+    .map((p) => PASSO_ROTULO[p.chave]);
   const emitidas = (charges ?? []).filter((x) => x.status !== 'cancelada');
   return {
     condo: c,
