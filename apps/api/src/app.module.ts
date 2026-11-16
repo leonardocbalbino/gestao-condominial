@@ -14,6 +14,7 @@ import { CommunicationModule } from './modules/communication/communication.modul
 import { DocumentsModule } from './modules/documents/documents.module';
 import { OutboxModule } from './outbox/outbox.module';
 import { IdentityModule } from './modules/identity/identity.module';
+import { ImplantacaoModule } from './modules/implantacao/implantacao.module';
 import { LedgerModule } from './modules/ledger/ledger.module';
 import { OrgModule } from './modules/org/org.module';
 import { PlatformModule } from './modules/platform/platform.module';
@@ -61,6 +62,7 @@ const REQUEST_ID = /^[\w-]{8,64}$/;
     AuditModule,
     OrgModule,
     IdentityModule,
+    ImplantacaoModule,
     DocumentsModule,
     LedgerModule,
     BillingModule,
