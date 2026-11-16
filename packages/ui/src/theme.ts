@@ -54,13 +54,30 @@ export function accessiblePrimary(primary: string): { primary: string; onPrimary
   return { primary: current, onPrimary: WHITE };
 }
 
+/**
+ * Tons suaves derivados da cor da marca: fundo = 85% branco + 15% marca; texto sobre ele
+ * = a marca escurecida até atingir AA. Assim o chip e o menu ativo acompanham o white label.
+ */
+export function softTones(primary: string): { primarySoft: string; onPrimarySoft: string } {
+  const [r, g, b] = parseHex(primary);
+  const mix = (c: number) => c * 0.15 + 255 * 0.85;
+  const primarySoft = toHex([mix(r), mix(g), mix(b)]);
+  let on = primary.toUpperCase();
+  for (let step = 0; step < 30 && contrastRatio(on, primarySoft) < WCAG_AA_TEXT; step++) {
+    const [cr, cg, cb] = parseHex(on);
+    on = toHex([cr * 0.85, cg * 0.85, cb * 0.85]);
+  }
+  return { primarySoft, onPrimarySoft: on };
+}
+
 export function createTheme(options: ThemeOptions = {}): Theme {
   const fontScale = Math.min(2, Math.max(1, options.fontScale ?? 1));
   let colors: ColorPalette = options.highContrast ? highContrastColors : lightColors;
 
   // No alto contraste a marca é ignorada: a legibilidade tem prioridade sobre o branding.
   if (!options.highContrast && options.branding?.primaryColor) {
-    colors = { ...colors, ...accessiblePrimary(options.branding.primaryColor) };
+    const brand = accessiblePrimary(options.branding.primaryColor);
+    colors = { ...colors, ...brand, ...softTones(brand.primary) };
   }
 
   const fontSize = Object.fromEntries(

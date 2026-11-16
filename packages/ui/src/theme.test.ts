@@ -16,7 +16,24 @@ describe('paletas base', () => {
     [c.textMuted, c.surface],
     [c.onPrimary, c.primary],
     [c.onDanger, c.danger],
+    [c.onPrimarySoft, c.primarySoft],
+    [c.onSuccessSurface, c.successSurface],
+    [c.onAttentionSurface, c.attentionSurface],
+    [c.attention, c.attentionSurface],
+    [c.onAttention, c.attention],
+    [c.attention, c.surface],
+    [c.success, c.surface],
+    [c.onSidebar, c.sidebar],
+    [c.onSidebar, c.sidebarActive],
+    [c.textMuted, c.background],
   ];
+
+  it.each([
+    ['clara', lightColors],
+    ['alto contraste', highContrastColors],
+  ])('paleta %s: borda de controle tem 3:1 sobre a superfície (WCAG 1.4.11)', (_name, palette) => {
+    expect(contrastRatio(palette.border, palette.surface)).toBeGreaterThanOrEqual(3);
+  });
 
   it.each([
     ['clara', lightColors],
@@ -34,6 +51,16 @@ describe('accessiblePrimary (white label)', () => {
     (brand) => {
       const { primary, onPrimary } = accessiblePrimary(brand);
       expect(contrastRatio(primary, onPrimary)).toBeGreaterThanOrEqual(WCAG_AA_TEXT);
+    },
+  );
+
+  it.each(['#FFEB3B', '#00BCD4', '#7B1FA2', '#1D4ED8'])(
+    'tons suaves da marca %s mantêm texto AA',
+    (brand) => {
+      const { colors } = createTheme({ branding: { primaryColor: brand } });
+      expect(contrastRatio(colors.onPrimarySoft, colors.primarySoft)).toBeGreaterThanOrEqual(
+        WCAG_AA_TEXT,
+      );
     },
   );
 

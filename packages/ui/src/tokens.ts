@@ -58,28 +58,57 @@ export interface ColorPalette {
   surface: string;
   text: string;
   textMuted: string;
+  /** Borda de controles (campos, botões contornados): ≥ 3:1 sobre a superfície (WCAG 1.4.11). */
   border: string;
+  /** Contorno de cartões e divisórias: decorativo, o próprio conteúdo delimita o cartão. */
+  divider: string;
   primary: string;
   onPrimary: string;
+  /** Fundo suave da cor principal (chip "Vence em", item ativo do menu). */
+  primarySoft: string;
+  onPrimarySoft: string;
   success: string;
+  successSurface: string;
+  onSuccessSurface: string;
   warning: string;
+  /** Atraso / atenção: laranja, não vermelho, para não assustar o morador. */
+  attention: string;
+  onAttention: string;
+  attentionSurface: string;
+  onAttentionSurface: string;
   danger: string;
   onDanger: string;
+  /** Menu lateral do painel da gestora. */
+  sidebar: string;
+  onSidebar: string;
+  sidebarActive: string;
   focus: string;
 }
 
 export const lightColors: ColorPalette = {
-  background: '#F7F8FA',
+  background: '#F4F6F9',
   surface: '#FFFFFF',
-  text: '#14171F',
-  textMuted: '#4A5160',
-  border: '#C9CED8',
+  text: '#0F172A',
+  textMuted: '#475569',
+  border: '#64748B',
+  divider: '#E2E8F0',
   primary: '#1D4ED8',
   onPrimary: '#FFFFFF',
-  success: '#166534',
+  primarySoft: '#DBEAFE',
+  onPrimarySoft: '#1E3A8A',
+  success: '#15803D',
+  successSurface: '#ECFDF5',
+  onSuccessSurface: '#065F46',
   warning: '#92400E',
+  attention: '#C2410C',
+  onAttention: '#FFFFFF',
+  attentionSurface: '#FFF7ED',
+  onAttentionSurface: '#7C2D12',
   danger: '#B91C1C',
   onDanger: '#FFFFFF',
+  sidebar: '#0F172A',
+  onSidebar: '#F8FAFC',
+  sidebarActive: '#1E293B',
   focus: '#F59E0B',
 };
 
@@ -89,11 +118,23 @@ export const highContrastColors: ColorPalette = {
   text: '#FFFFFF',
   textMuted: '#FFFFFF',
   border: '#FFFFFF',
+  divider: '#FFFFFF',
   primary: '#FFD400',
   onPrimary: '#000000',
+  primarySoft: '#000000',
+  onPrimarySoft: '#FFD400',
   success: '#5CFF7A',
+  successSurface: '#000000',
+  onSuccessSurface: '#5CFF7A',
   warning: '#FFD400',
+  attention: '#FFA94D',
+  onAttention: '#000000',
+  attentionSurface: '#000000',
+  onAttentionSurface: '#FFA94D',
   danger: '#FF6B6B',
   onDanger: '#000000',
+  sidebar: '#000000',
+  onSidebar: '#FFFFFF',
+  sidebarActive: '#333333',
   focus: '#00E5FF',
 };
