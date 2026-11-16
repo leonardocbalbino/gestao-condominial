@@ -87,17 +87,18 @@ export class AuthService {
 
     // Enquanto não confirmado, reapresenta o mesmo segredo: recarregar a tela não pode
     // invalidar o QR que a pessoa já leu no aplicativo autenticador.
-    if (user.totpSecretEnc) {
-      const pending = this.secrets.decrypt(user.totpSecretEnc);
-      return { secret: pending, otpauthUrl: otpauthUrl(pending, user.email, TOTP_ISSUER) };
-    }
-
     await bindUser(user.id);
-    const secret = generateTotpSecret();
-    await this.users.setPendingTotp(user.id, this.secrets.encrypt(secret));
+    const resumed = user.totpSecretEnc !== null;
+    let secret: string;
+    if (user.totpSecretEnc) {
+      secret = this.secrets.decrypt(user.totpSecretEnc);
+    } else {
+      secret = generateTotpSecret();
+      await this.users.setPendingTotp(user.id, this.secrets.encrypt(secret));
+    }
     await this.audit.record({
       gestoraId: null,
-      action: 'auth.mfa.enrollment_started',
+      action: resumed ? 'auth.mfa.enrollment_resumed' : 'auth.mfa.enrollment_started',
       resourceType: 'app_user',
       resourceId: user.id,
     });
