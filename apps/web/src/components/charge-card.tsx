@@ -1,54 +1,94 @@
-import { formatBRL, formatDate, type MyChargeDto } from '@condo/contracts';
-import { FileText, QrCode, TriangleAlert } from 'lucide-react';
+import { formatBRL, formatDate, nomeDoMes, type MyChargeDto } from '@condo/contracts';
+import { CircleCheck, Clock, FileText, QrCode, TriangleAlert } from 'lucide-react';
 import { CopyButton } from './copy-button';
-import { ButtonLink, Card } from './ui';
+import { Badge, ButtonLink, Card } from './ui';
+
+const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
+
+function prazo(dias: number): string {
+  if (dias <= 0) return 'Vence hoje';
+  if (dias === 1) return 'Vence amanhã';
+  return `Vence em ${plural(dias, 'dia', 'dias')}`;
+}
+
+const secondaryLink =
+  'touch inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] border-2 border-border bg-surface px-4 py-3 font-bold text-text hover:border-primary hover:text-primary';
 
 /**
- * A taxa como o morador vê: título simples, valor já atualizado e os botões para pagar.
- * Em atraso, destaque forte (borda grossa vermelha + ícone + texto).
+ * A taxa como o morador vê: linguagem do dia a dia, valor já atualizado e o Pix em
+ * destaque (pagar em até dois toques). Em atraso o cartão fica laranja com o valor
+ * "para pagar hoje"; cor nunca é o único sinal (ícone + texto no chip).
  */
 export function ChargeCard({ charge, unitId }: { charge: MyChargeDto; unitId: string }) {
   const aberta = charge.status !== 'paga' && charge.status !== 'cancelada';
+  const atrasada = aberta && charge.atrasada;
+  const mes = nomeDoMes(charge.competencia);
+
   return (
-    <Card tone={charge.atrasada ? 'danger' : undefined}>
-      <h3 className="text-xl font-bold">{charge.titulo}</h3>
-      {charge.atrasada && (
-        <p className="mt-1 flex items-center gap-2 font-bold text-danger">
-          <TriangleAlert aria-hidden /> Em atraso há {charge.diasAtraso}{' '}
-          {charge.diasAtraso === 1 ? 'dia' : 'dias'}
-        </p>
-      )}
-      <p className="mt-2 text-3xl font-bold tabular-nums">
+    <Card tone={atrasada ? 'attention' : aberta ? 'primary' : 'neutral'} className="p-6">
+      <div className="mb-3">
+        {atrasada ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-attention px-3 py-1 text-sm font-bold text-on-attention">
+            <TriangleAlert aria-hidden size={18} /> Taxa em atraso há{' '}
+            {plural(charge.diasAtraso, 'dia', 'dias')}
+          </span>
+        ) : aberta ? (
+          <Badge tone="info">
+            <Clock aria-hidden size={16} className="mr-1 inline align-[-3px]" />
+            {prazo(charge.diasParaVencer)}
+          </Badge>
+        ) : (
+          <Badge tone="success">
+            <CircleCheck aria-hidden size={16} className="mr-1 inline align-[-3px]" />
+            Paga{charge.pagoEm ? ` em ${formatDate(charge.pagoEm)}` : ''}
+          </Badge>
+        )}
+      </div>
+
+      <h3 className={`text-lg font-semibold ${atrasada ? 'text-on-attention-surface' : ''}`}>
+        {atrasada ? `Sua taxa de ${mes}, com multa e juros` : charge.titulo}
+      </h3>
+      <p
+        className={`mt-1 text-4xl font-extrabold tracking-tight tabular-nums ${atrasada ? 'text-on-attention-surface' : ''}`}
+      >
         {formatBRL(
           aberta
             ? charge.valorAtualizadoCentavos
             : (charge.valorPagoCentavos ?? charge.valorCentavos),
         )}
       </p>
-      <p className="text-text-muted">
-        {charge.status === 'paga' && charge.pagoEm
-          ? `Paga em ${formatDate(charge.pagoEm)}`
-          : `Vence em ${formatDate(charge.vencimento)}`}
-        {charge.atrasada && ` · valor original ${formatBRL(charge.valorCentavos)}`}
-      </p>
+      {atrasada ? (
+        <p className="mt-1 text-on-attention-surface">
+          <strong>Valor atualizado para pagar hoje.</strong> Original{' '}
+          {formatBRL(charge.valorCentavos)}, venceu em {formatDate(charge.vencimento)}.
+        </p>
+      ) : (
+        aberta && (
+          <p className="mt-1 text-text-muted">Vencimento: {formatDate(charge.vencimento)}</p>
+        )
+      )}
+
       {aberta && (charge.pixCopiaCola || charge.boletoUrl) && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 flex flex-col gap-3">
           {charge.pixCopiaCola && (
-            <ButtonLink href={`/morador/pagar/${charge.id}?u=${unitId}`}>
-              <QrCode aria-hidden /> Pagar com Pix
+            <ButtonLink
+              href={`/morador/pagar/${charge.id}?u=${unitId}`}
+              variant={atrasada ? 'attention' : 'primary'}
+              className="min-h-14 w-full text-lg"
+            >
+              <QrCode aria-hidden /> {atrasada ? 'Pagar agora com Pix' : 'Pagar com Pix'}
             </ButtonLink>
           )}
-          {charge.pixCopiaCola && <CopyButton value={charge.pixCopiaCola} label="Copiar código" />}
-          {charge.boletoUrl && (
-            <a
-              href={charge.boletoUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border-2 border-border bg-surface px-5 py-3 font-semibold"
-            >
-              <FileText aria-hidden /> 2ª via
-            </a>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            {charge.pixCopiaCola && (
+              <CopyButton value={charge.pixCopiaCola} label="Copiar código" />
+            )}
+            {charge.boletoUrl && (
+              <a href={charge.boletoUrl} target="_blank" rel="noreferrer" className={secondaryLink}>
+                <FileText aria-hidden /> {atrasada ? '2ª via' : 'Ver boleto'}
+              </a>
+            )}
+          </div>
         </div>
       )}
     </Card>

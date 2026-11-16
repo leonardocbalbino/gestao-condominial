@@ -1,28 +1,29 @@
-import Link from 'next/link';
 import { Card } from '@/components/ui';
+import { PreferenceControls } from '@/components/preferences';
 
 /**
- * "Mais": onde ficam os módulos que não estão nos atalhos. Reservas, visitas, encomendas
- * e prestação de contas aparecem aqui quando a gestora ligar cada módulo (Fases 2 e 3).
+ * "Mais": módulos que não estão nos atalhos e os ajustes de tela. Reservas, visitas,
+ * encomendas e prestação de contas aparecem aqui quando a gestora ligar cada módulo
+ * (Fases 2 e 3).
  */
-export default async function MaisPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ u?: string }>;
-}) {
-  const u = (await searchParams).u;
+export default function MaisPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <Link
-        href={`/morador${u ? `?u=${u}` : ''}`}
-        className="touch inline-flex items-center text-primary underline"
-      >
-        ← Início
-      </Link>
-      <h1 className="text-2xl font-bold">Mais</h1>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-[1.75rem] font-extrabold tracking-tight">Mais</h1>
       <Card>
         <p>Por enquanto, seu condomínio usa boletos e avisos por aqui.</p>
       </Card>
+      <section id="ajustes" aria-labelledby="ajustes-titulo" className="scroll-mt-4">
+        <h2 id="ajustes-titulo" className="mb-2 text-lg font-bold">
+          Letra, contraste e conta
+        </h2>
+        <Card>
+          <p className="mb-3 text-text-muted">
+            Aumente a letra ou ligue o alto contraste se estiver difícil de ler.
+          </p>
+          <PreferenceControls />
+        </Card>
+      </section>
     </div>
   );
 }

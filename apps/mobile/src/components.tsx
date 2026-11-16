@@ -48,16 +48,30 @@ export function Button({
   onPress,
   variant = 'primary',
   disabled,
+  large,
 }: {
   label: string;
   icon: IconName;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'attention';
   disabled?: boolean;
+  /** Botão de destaque (pagar): 56 de altura, letra maior. */
+  large?: boolean;
 }) {
   const { theme } = useTheme();
-  const primary = variant === 'primary';
-  const fg = primary ? theme.colors.onPrimary : theme.colors.text;
+  const filled = variant !== 'secondary';
+  const bg =
+    variant === 'attention'
+      ? theme.colors.attention
+      : filled
+        ? theme.colors.primary
+        : theme.colors.surface;
+  const fg =
+    variant === 'attention'
+      ? theme.colors.onAttention
+      : filled
+        ? theme.colors.onPrimary
+        : theme.colors.text;
   return (
     <Pressable
       accessibilityRole="button"
@@ -66,12 +80,13 @@ export function Button({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: theme.minTouchTarget,
-        paddingHorizontal: 20,
+        flexGrow: 1,
+        minHeight: large ? 56 : 52,
+        paddingHorizontal: 16,
         paddingVertical: 12,
-        borderRadius: theme.radius.md,
-        backgroundColor: primary ? theme.colors.primary : theme.colors.surface,
-        borderWidth: primary ? 0 : 2,
+        borderRadius: 14,
+        backgroundColor: bg,
+        borderWidth: filled ? 0 : 2,
         borderColor: theme.colors.border,
         flexDirection: 'row',
         alignItems: 'center',
@@ -81,27 +96,77 @@ export function Button({
       })}
     >
       <Ionicons name={icon} size={24} color={fg} />
-      <Text style={{ color: fg, fontSize: theme.fontSize.md, fontWeight: '700' }}>{label}</Text>
+      <Text
+        style={{
+          color: fg,
+          fontSize: large ? theme.fontSize.lg : theme.fontSize.md,
+          fontWeight: '700',
+        }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
-export function Card({ children, tone }: { children: ReactNode; tone?: 'danger' | 'warning' }) {
+type CardTone = 'neutral' | 'primary' | 'attention' | 'warning' | 'danger';
+
+export function Card({ children, tone = 'neutral' }: { children: ReactNode; tone?: CardTone }) {
   const { theme } = useTheme();
+  const colors = theme.colors;
+  const border: Record<CardTone, [number, string]> = {
+    neutral: [1, colors.divider],
+    primary: [2, colors.primary],
+    attention: [2, colors.attention],
+    warning: [2, colors.warning],
+    danger: [4, colors.danger],
+  };
   const style: ViewStyle = {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg,
-    padding: 16,
+    backgroundColor: tone === 'attention' ? colors.attentionSurface : colors.surface,
+    borderRadius: 18,
+    padding: 18,
     gap: 8,
-    borderWidth: tone === 'danger' ? 4 : tone === 'warning' ? 2 : 1,
-    borderColor:
-      tone === 'danger'
-        ? theme.colors.danger
-        : tone === 'warning'
-          ? theme.colors.warning
-          : theme.colors.border,
+    borderWidth: border[tone][0],
+    borderColor: border[tone][1],
   };
   return <View style={style}>{children}</View>;
+}
+
+/** Selo curto (ex.: "Vence em 3 dias"), sempre com ícone + texto. */
+export function Chip({
+  label,
+  icon,
+  tone = 'info',
+}: {
+  label: string;
+  icon: IconName;
+  tone?: 'info' | 'attention' | 'success';
+}) {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const [bg, fg] =
+    tone === 'attention'
+      ? [colors.attention, colors.onAttention]
+      : tone === 'success'
+        ? [colors.successSurface, colors.onSuccessSurface]
+        : [colors.primarySoft, colors.onPrimarySoft];
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: bg,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+      }}
+    >
+      <Ionicons name={icon} size={16} color={fg} />
+      <Text style={{ color: fg, fontSize: theme.fontSize.sm, fontWeight: '700' }}>{label}</Text>
+    </View>
+  );
 }
 
 /** Atalho grande da tela inicial (ícone + uma palavra; dois por linha). */
@@ -123,17 +188,28 @@ export function Shortcut({
       style={{
         flexBasis: '47%',
         flexGrow: 1,
-        minHeight: 110,
+        minHeight: 104,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        borderRadius: theme.radius.lg,
-        borderWidth: 2,
-        borderColor: theme.colors.border,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: theme.colors.divider,
         backgroundColor: theme.colors.surface,
       }}
     >
-      <Ionicons name={icon} size={40} color={theme.colors.primary} />
+      <View
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.colors.primarySoft,
+        }}
+      >
+        <Ionicons name={icon} size={26} color={theme.colors.onPrimarySoft} />
+      </View>
       <Text style={{ color: theme.colors.text, fontSize: theme.fontSize.lg, fontWeight: '700' }}>
         {label}
       </Text>

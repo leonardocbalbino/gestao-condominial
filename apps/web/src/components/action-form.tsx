@@ -24,12 +24,12 @@ export function ActionForm({
       {children}
       <div aria-live="polite">
         {state.error && (
-          <p className="flex items-start gap-2 rounded-lg border-2 border-danger p-3 text-danger">
+          <p className="flex items-start gap-2 rounded-xl border-2 border-danger p-3 text-danger">
             <TriangleAlert aria-hidden className="mt-0.5 shrink-0" /> {state.error}
           </p>
         )}
         {state.ok && (
-          <p className="flex items-start gap-2 rounded-lg border-2 border-success p-3 text-success">
+          <p className="flex items-start gap-2 rounded-xl border-2 border-success p-3 text-success">
             <CheckCircle2 aria-hidden className="mt-0.5 shrink-0" /> {state.ok}
           </p>
         )}
@@ -42,9 +42,11 @@ export function ActionForm({
 export function SubmitButton({
   children,
   variant = 'primary',
+  className = '',
 }: {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
+  className?: string;
 }) {
   const { pending } = useFormStatus();
   const tone =
@@ -52,12 +54,12 @@ export function SubmitButton({
       ? 'bg-primary text-on-primary'
       : variant === 'danger'
         ? 'bg-danger text-on-danger'
-        : 'bg-surface text-text border-2 border-border';
+        : 'bg-surface text-text border-2 border-border hover:border-primary hover:text-primary';
   return (
     <button
       type="submit"
       disabled={pending}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3 font-semibold ${tone} disabled:opacity-60`}
+      className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] px-5 py-3 font-bold ${tone} disabled:opacity-60 ${className}`}
     >
       {pending ? <LoaderCircle aria-hidden className="animate-spin" /> : null}
       {children}

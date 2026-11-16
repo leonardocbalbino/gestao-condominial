@@ -8,14 +8,15 @@ import type { ComponentProps, ReactNode } from 'react';
 
 const variants = {
   primary: 'bg-primary text-on-primary hover:opacity-90',
-  secondary: 'bg-surface text-text border-2 border-border hover:border-primary',
+  secondary: 'bg-surface text-text border-2 border-border hover:border-primary hover:text-primary',
   danger: 'bg-danger text-on-danger hover:opacity-90',
+  attention: 'bg-attention text-on-attention hover:opacity-90',
 } as const;
 
 type Variant = keyof typeof variants;
 
 const buttonClass = (variant: Variant, extra = '') =>
-  `touch inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-5 py-3 font-semibold ${variants[variant]} disabled:opacity-60 ${extra}`;
+  `touch inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] px-5 py-3 font-bold ${variants[variant]} disabled:opacity-60 ${extra}`;
 
 export function Button({
   variant = 'primary',
@@ -33,26 +34,29 @@ export function ButtonLink({
   return <Link className={buttonClass(variant, className)} {...props} />;
 }
 
+const cardTones = {
+  neutral: 'bg-surface border border-divider',
+  /** Ação esperada da pessoa (taxa a vencer): borda da cor principal. */
+  primary: 'bg-surface border-2 border-primary',
+  /** Atraso: laranja sobre fundo suave, mais forte que o neutro sem assustar. */
+  attention: 'bg-attention-surface border-2 border-attention',
+  danger: 'bg-surface border-4 border-danger',
+  warning: 'bg-surface border-2 border-warning',
+  success: 'bg-success-surface border border-success',
+} as const;
+
 export function Card({
   children,
   className = '',
-  tone,
+  tone = 'neutral',
 }: {
   children: ReactNode;
   className?: string;
   /** Destaque visual (ex.: pendência em atraso). */
-  tone?: 'danger' | 'warning' | 'success';
+  tone?: keyof typeof cardTones;
 }) {
-  const border =
-    tone === 'danger'
-      ? 'border-danger border-4'
-      : tone === 'warning'
-        ? 'border-warning border-2'
-        : tone === 'success'
-          ? 'border-success border-2'
-          : 'border-border border';
   return (
-    <section className={`rounded-xl bg-surface p-5 ${border} ${className}`}>{children}</section>
+    <section className={`rounded-2xl p-5 ${cardTones[tone]} ${className}`}>{children}</section>
   );
 }
 
@@ -85,7 +89,7 @@ export function Field({
     <label className="flex flex-col gap-1">
       <span className="font-semibold">{label}</span>
       <input
-        className="rounded-lg border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
+        className="min-h-13 rounded-xl border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
         {...props}
       />
       {hint && <span className="text-sm text-text-muted">{hint}</span>}
@@ -102,7 +106,7 @@ export function SelectField({
     <label className="flex flex-col gap-1">
       <span className="font-semibold">{label}</span>
       <select
-        className="rounded-lg border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
+        className="min-h-13 rounded-xl border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
         {...props}
       >
         {children}
@@ -116,7 +120,7 @@ export function TextArea({ label, ...props }: ComponentProps<'textarea'> & { lab
     <label className="flex flex-col gap-1">
       <span className="font-semibold">{label}</span>
       <textarea
-        className="min-h-32 rounded-lg border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
+        className="min-h-32 rounded-xl border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
         {...props}
       />
     </label>
@@ -124,9 +128,10 @@ export function TextArea({ label, ...props }: ComponentProps<'textarea'> & { lab
 }
 
 const badgeTones = {
-  neutral: 'bg-background text-text border-border',
-  success: 'bg-surface text-success border-success',
-  warning: 'bg-surface text-warning border-warning',
+  neutral: 'bg-background text-text border-divider',
+  info: 'bg-primary-soft text-on-primary-soft border-primary-soft',
+  success: 'bg-success-surface text-on-success-surface border-success-surface',
+  warning: 'bg-attention-surface text-on-attention-surface border-attention-surface',
   danger: 'bg-surface text-danger border-danger',
 } as const;
 
@@ -139,7 +144,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-block rounded-full border-2 px-3 py-0.5 text-sm font-semibold ${badgeTones[tone]}`}
+      className={`inline-block rounded-full border px-3 py-0.5 text-sm font-bold ${badgeTones[tone]}`}
     >
       {children}
     </span>
@@ -174,7 +179,7 @@ export function ResponsiveTable<T>({
     <>
       <ul className="flex flex-col gap-3 md:hidden">
         {rows.map((row) => (
-          <li key={rowKey(row)} className="rounded-xl border border-border bg-surface p-4">
+          <li key={rowKey(row)} className="rounded-2xl border border-divider bg-surface p-4">
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
               {columns.map((c) => (
                 <div key={c.label} className="contents">
@@ -186,9 +191,9 @@ export function ResponsiveTable<T>({
           </li>
         ))}
       </ul>
-      <table className="hidden w-full border-collapse overflow-hidden rounded-xl bg-surface md:table">
+      <table className="hidden w-full border-collapse overflow-hidden rounded-2xl border border-divider bg-surface md:table">
         <thead>
-          <tr className="border-b-2 border-border text-left">
+          <tr className="border-b border-divider bg-background text-left text-sm text-text-muted">
             {columns.map((c) => (
               <th key={c.label} className={`px-4 py-3 ${c.align === 'right' ? 'text-right' : ''}`}>
                 {c.label}
@@ -198,7 +203,7 @@ export function ResponsiveTable<T>({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-border last:border-0">
+            <tr key={rowKey(row)} className="border-b border-divider last:border-0">
               {columns.map((c) => (
                 <td
                   key={c.label}

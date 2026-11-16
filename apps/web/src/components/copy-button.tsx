@@ -15,7 +15,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
           setTimeout(() => setCopied(false), 3000);
         });
       }}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border-2 border-border bg-surface px-5 py-3 font-semibold text-text hover:border-primary"
+      className="inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] border-2 border-border bg-surface px-4 py-3 font-bold text-text hover:border-primary hover:text-primary"
     >
       {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
       <span aria-live="polite">{copied ? 'Copiado!' : label}</span>

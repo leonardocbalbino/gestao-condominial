@@ -4,6 +4,7 @@ import {
   type AccountDto,
   type BudgetDto,
   type ChargeDto,
+  type InadimplenciaDto,
   type PaymentAccountDto,
   type RateioPreviewDto,
 } from '@condo/contracts';
@@ -18,15 +19,6 @@ import {
   emitRateioAction,
   simulatePaymentAction,
 } from '../actions';
-
-interface Inadimplente {
-  chargeId: string;
-  unidade: string;
-  pagador: string | null;
-  competencia: string;
-  valorAtualizadoCentavos: number;
-  diasAtraso: number;
-}
 
 const statusLabel: Record<
   ChargeDto['status'],
@@ -59,7 +51,7 @@ export default async function CobrancaPage({
     load<BudgetDto[]>(`${base}/budgets`),
     load<AccountDto[]>(`${base}/ledger/accounts`),
     load<ChargeDto[]>(`${base}/charges?competencia=${competencia}`),
-    load<Inadimplente[]>(`${base}/charges/inadimplencia`),
+    load<InadimplenciaDto[]>(`${base}/charges/inadimplencia`),
     load<PaymentAccountDto>(`${base}/billing/account`),
     query.competencia ? load<RateioPreviewDto>(`${base}/rateio/preview?${previewQuery}`) : null,
   ]);
