@@ -47,6 +47,11 @@ describe('login com 2FA (staff)', () => {
     expect(enroll.body.otpauthUrl).toMatch(/^otpauth:\/\/totp\//);
     secret = enroll.body.secret;
 
+    // Recarregar a tela de cadastro reapresenta o mesmo segredo (o QR já lido continua valendo).
+    const again = await t.http().post('/auth/mfa/enroll').send({ mfaToken: step1.body.mfaToken });
+    expect(again.status).toBe(200);
+    expect(again.body.secret).toBe(secret);
+
     const verify = await t
       .http()
       .post('/auth/mfa/verify')

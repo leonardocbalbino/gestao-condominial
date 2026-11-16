@@ -53,6 +53,10 @@ export default async function DoisFatoresPage({
             Sem câmera? Digite esta chave no aplicativo:{' '}
             <code className="break-all font-mono text-text">{secret}</code>
           </p>
+          <p className="mt-2 text-sm text-text-muted">
+            Se o aplicativo já tiver outra entrada &quot;Gestão Condominial&quot; de uma tentativa
+            anterior, apague-a e use só esta.
+          </p>
         </Card>
       )}
       <Card>

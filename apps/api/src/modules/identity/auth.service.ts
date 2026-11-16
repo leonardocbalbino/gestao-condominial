@@ -85,6 +85,13 @@ export class AuthService {
     if (user.totpEnabledAt)
       throw new ConflictException('Verificação em duas etapas já configurada');
 
+    // Enquanto não confirmado, reapresenta o mesmo segredo: recarregar a tela não pode
+    // invalidar o QR que a pessoa já leu no aplicativo autenticador.
+    if (user.totpSecretEnc) {
+      const pending = this.secrets.decrypt(user.totpSecretEnc);
+      return { secret: pending, otpauthUrl: otpauthUrl(pending, user.email, TOTP_ISSUER) };
+    }
+
     await bindUser(user.id);
     const secret = generateTotpSecret();
     await this.users.setPendingTotp(user.id, this.secrets.encrypt(secret));
