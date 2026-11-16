@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Scale,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,7 +42,14 @@ export const condoGroups: { title: string; items: CondoSection[] }[] = [
   },
 ];
 
-const allSections = [visaoGeral, ...condoGroups.flatMap((g) => g.items)];
+/** Implantação (sempre acessível) e regras da convenção; fica no fim do menu. */
+export const configuracoes: CondoSection = {
+  href: '/configuracoes',
+  label: 'Configurações',
+  icon: Settings,
+};
+
+const allSections = [visaoGeral, ...condoGroups.flatMap((g) => g.items), configuracoes];
 
 /** Lê `/painel/c/<id>/<seção>/...` → id do condomínio e a seção em uso. */
 export function parsePainelPath(pathname: string): {

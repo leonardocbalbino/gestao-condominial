@@ -4,7 +4,7 @@ import { ArrowLeft, Building2, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useId } from 'react';
-import { condoGroups, parsePainelPath, visaoGeral } from '@/lib/painel-sections';
+import { condoGroups, configuracoes, parsePainelPath, visaoGeral } from '@/lib/painel-sections';
 
 function Item({
   href,
@@ -91,6 +91,13 @@ export function PainelNav() {
           ))}
         </Group>
       ))}
+      <ul className="flex flex-col gap-0.5 border-t border-on-sidebar/15 pt-4">
+        <Item
+          {...configuracoes}
+          href={`${base}${configuracoes.href}`}
+          active={isActive(configuracoes.href)}
+        />
+      </ul>
     </nav>
   );
 }

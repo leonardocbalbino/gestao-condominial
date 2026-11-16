@@ -41,15 +41,18 @@ function Breadcrumb({ condos }: { condos: { id: string; nome: string }[] }) {
               key={c.href}
               className={`flex min-w-0 items-center gap-1.5 ${last ? '' : 'max-sm:hidden'}`}
             >
-              {i > 0 && <span aria-hidden>/</span>}
               {last ? (
                 <span aria-current="page" className="truncate font-medium text-text">
                   {c.label}
                 </span>
               ) : (
-                <Link href={c.href} className="truncate hover:text-primary hover:underline">
-                  {c.label}
-                </Link>
+                <>
+                  <Link href={c.href} className="truncate hover:text-primary hover:underline">
+                    {c.label}
+                  </Link>
+                  {/* A barra vai com o item: some junto quando ele some no celular. */}
+                  <span aria-hidden>/</span>
+                </>
               )}
             </li>
           );
