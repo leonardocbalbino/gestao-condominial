@@ -300,6 +300,20 @@ describe('papéis customizados e anti-escalada', () => {
     expect(res.status).toBe(403);
   });
 
+  it('gestora nomeia síndico (que aprova pagamentos), mas não pode nomear a si mesma', async () => {
+    const self = await t
+      .http()
+      .post('/role-assignments')
+      .set(auth(adminToken, gestoraA))
+      .send({
+        userId: admin.id,
+        roleId: await systemRoleId('sindico'),
+        scope: { type: 'condominio', condominioId: condoA1 },
+      });
+    expect(self.status).toBe(403);
+    expect(self.body.message).toMatch(/si mesmo/);
+  });
+
   it('não atribui escopo em condomínio de outra gestora', async () => {
     const target = await createUser();
     const res = await t

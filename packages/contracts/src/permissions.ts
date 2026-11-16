@@ -53,6 +53,13 @@ const APPROVAL_PERMISSIONS: readonly PermissionKey[] = [
 ];
 
 /**
+ * Permissões que quem tem `role:manage` pode delegar sem possuí-las (a gestora nomeia
+ * síndico e conselho, que aprovam pagamentos). Para não virar brecha, ninguém atribui
+ * papel a si mesmo.
+ */
+export const DELEGABLE_WITHOUT_HOLDING: readonly PermissionKey[] = APPROVAL_PERMISSIONS;
+
+/**
  * Papéis de sistema (gestora_id nulo no banco), disponíveis para todas as gestoras.
  * "Síndico lança receitas e despesas" é configurável: a gestora cria um papel customizado
  * com `lancamento:create` e atribui ao síndico daquele condomínio.

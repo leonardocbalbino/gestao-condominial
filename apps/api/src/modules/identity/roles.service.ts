@@ -14,6 +14,7 @@ import type {
   RoleDto,
   RoleScope,
 } from '@condo/contracts';
+import { DELEGABLE_WITHOUT_HOLDING } from '@condo/contracts';
 import { and, asc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { isUniqueViolation } from '../../db/errors';
 import { currentContext } from '../../db/request-context';
@@ -32,6 +33,10 @@ export interface UserAssignment {
   roleName: string;
   scope: AssignedScope;
 }
+
+/** Permissões que quem delega precisa possuir (as de aprovação são delegáveis sem possuir). */
+const mustHold = (permissions: readonly PermissionKey[]): PermissionKey[] =>
+  permissions.filter((p) => !DELEGABLE_WITHOUT_HOLDING.includes(p));
 
 /** Converte o caminho ltree de volta para o escopo do contrato. */
 function scopeFromPath(path: string): AssignedScope {
@@ -65,7 +70,7 @@ export class RolesService {
     const { tx, gestoraId } = currentContext();
     if (!gestoraId) throw new Error('Criação de papel exige gestora em contexto');
     // Ninguém cria papel com permissão que não tem: impede escalar privilégio.
-    if (!(await this.authz.holdsAll(input.permissions, { gestoraId }))) {
+    if (!(await this.authz.holdsAll(mustHold(input.permissions), { gestoraId }))) {
       throw new ForbiddenException('O papel inclui permissões que você não possui');
     }
 
@@ -108,8 +113,12 @@ export class RolesService {
       throw new BadRequestException('Morador é vinculado pela unidade, não por atribuição direta');
     }
     if (!(await this.authz.can('role:manage', target))) throw new ForbiddenException();
+    // Sem auto-atribuição: senão quem delega aprovação poderia se dar o poder de aprovar.
+    if (input.userId === actorId) {
+      throw new ForbiddenException('Você não pode atribuir papéis a si mesmo');
+    }
     const permissions = await this.permissionsOf(roleRow.id);
-    if (!(await this.authz.holdsAll(permissions, target))) {
+    if (!(await this.authz.holdsAll(mustHold(permissions), target))) {
       throw new ForbiddenException('O papel inclui permissões que você não possui neste escopo');
     }
     if (!(await this.users.findById(input.userId)))
