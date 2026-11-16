@@ -13,6 +13,8 @@
   --color-divider: #e2e8f0;
   --color-primary: #1d4ed8;
   --color-on-primary: #ffffff;
+  --color-primary-hover: #1e40af;
+  --color-info: #1e3a8a;
   --color-primary-soft: #dbeafe;
   --color-on-primary-soft: #1e3a8a;
   --color-success: #15803d;
@@ -28,13 +30,45 @@
   --color-sidebar: #0f172a;
   --color-on-sidebar: #f8fafc;
   --color-sidebar-active: #1e293b;
-  --color-focus: #f59e0b;
-  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-focus: #1d4ed8;
+  --color-focus-on-dark: #60a5fa;
+  --font-sans: var(--font-inter), Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Escala do painel (ADR-0009), em rem sobre a raiz de 16px do painel. */
+  --text-page: 1.75rem;
+  --text-page--line-height: 1.25;
+  --text-card: 1.125rem;
+  --text-card--line-height: 1.4;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5;
+  --text-label: 0.875rem;
+  --text-caption: 0.8125rem;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
 }
 
-/* Fonte base de 18px (público com pouca familiaridade com tecnologia), ajustável. */
+/*
+ * Fonte base de 18px para o morador (público com pouca familiaridade com tecnologia).
+ * O painel da equipe é mais denso: raiz de 16px e texto de 15px (ADR-0009). Nos dois,
+ * "A+" amplia tudo, porque tamanhos e espaçamentos são em rem.
+ */
 html {
   font-size: calc(112.5% * var(--font-scale, 1));
+}
+
+html:has(.painel) {
+  font-size: calc(100% * var(--font-scale, 1));
+}
+
+.painel {
+  font-size: var(--text-body);
+  /* Raios do painel: cartão 12px, controle 8px. */
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+}
+
+:root {
+  --radius-card: 1rem;
+  --radius-control: 0.875rem;
 }
 
 body {
@@ -50,19 +84,25 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Foco sempre visível e com contraste (WCAG 2.4.7). */
+/*
+ * Foco visível só para teclado (WCAG 2.4.7): anel azul de 2px com afastamento. Clique
+ * com mouse não desenha contorno. Sobre o menu escuro o anel fica azul claro (3:1).
+ */
+:focus {
+  outline: none;
+}
+
 :focus-visible {
-  outline: 3px solid var(--color-focus);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
-/* Alvos de toque ≥ 48px em tudo que é clicável. */
-button,
-[role='button'],
-a.touch,
-input,
-select,
-textarea {
+.bg-sidebar :focus-visible {
+  outline-color: var(--color-focus-on-dark);
+}
+
+/* Morador e telas públicas: alvos de toque ≥ 48px em tudo que é clicável (§7). */
+:root:not(:has(.painel)) :is(button, [role='button'], a.touch, input, select, textarea) {
   min-height: 48px;
 }
 

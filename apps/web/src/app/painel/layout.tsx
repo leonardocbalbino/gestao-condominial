@@ -14,7 +14,7 @@ export default async function PainelLayout({ children }: { children: ReactNode }
   return (
     <div
       style={await themeStyle(gestora.branding.primaryColor)}
-      className="min-h-screen bg-background text-text md:flex"
+      className="painel min-h-screen bg-background text-text md:flex"
     >
       <aside className="flex flex-col gap-4 bg-sidebar p-4 text-on-sidebar md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:gap-6 md:overflow-y-auto md:p-5">
         <div>
