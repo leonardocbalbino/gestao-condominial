@@ -1,78 +1,96 @@
 'use client';
 
-import {
-  Banknote,
-  BookCheck,
-  Building,
-  Building2,
-  FileText,
-  LayoutDashboard,
-  Megaphone,
-  Scale,
-  type LucideIcon,
-} from 'lucide-react';
+import { ArrowLeft, Building2, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-/** Seções de um condomínio; aparecem no menu quando se está dentro dele. */
-const condoSections: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: '', label: 'Visão geral', icon: LayoutDashboard },
-  { href: '/unidades', label: 'Unidades', icon: Building },
-  { href: '/cobranca', label: 'Cobrança', icon: Banknote },
-  { href: '/contas', label: 'Contas a pagar', icon: FileText },
-  { href: '/conciliacao', label: 'Conciliação', icon: Scale },
-  { href: '/fechamento', label: 'Fechamento', icon: BookCheck },
-  { href: '/comunicados', label: 'Comunicados', icon: Megaphone },
-];
+import { useId } from 'react';
+import { condoGroups, parsePainelPath, visaoGeral } from '@/lib/painel-sections';
 
 function Item({
   href,
   label,
   icon: Icon,
-  active,
-  nested = false,
+  active = false,
 }: {
   href: string;
   label: string;
   icon: LucideIcon;
-  active: boolean;
-  nested?: boolean;
+  active?: boolean;
 }) {
   return (
     <li>
       <Link
         href={href}
         aria-current={active ? 'page' : undefined}
-        className={`touch flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 font-semibold ${
-          nested ? 'md:pl-6' : ''
-        } ${active ? 'bg-sidebar-active text-on-sidebar' : 'text-on-sidebar/80 hover:bg-sidebar-active hover:text-on-sidebar'}`}
+        className={`flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 ${
+          active
+            ? 'bg-sidebar-active font-semibold text-on-sidebar shadow-[inset_3px_0_0_var(--color-primary)]'
+            : 'font-medium text-on-sidebar-muted hover:bg-sidebar-active hover:text-on-sidebar'
+        }`}
       >
-        <Icon aria-hidden size={20} /> {label}
+        <Icon aria-hidden size={18} /> {label}
       </Link>
     </li>
   );
 }
 
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  const id = useId();
+  return (
+    <div>
+      <p
+        id={id}
+        className="mb-1 px-3 text-caption font-semibold uppercase tracking-wider text-on-sidebar-muted"
+      >
+        {title}
+      </p>
+      <ul aria-labelledby={id} className="flex flex-col gap-0.5">
+        {children}
+      </ul>
+    </div>
+  );
+}
+
 /**
- * Menu do painel. No celular vira uma faixa rolável horizontal; no desktop, coluna.
- * Dentro de um condomínio, as seções dele entram logo abaixo de "Condomínios".
+ * Menu do painel. Fora de um condomínio: a carteira. Dentro de um condomínio: só os itens
+ * dele, em grupos, e "← Todos os condomínios" para voltar.
  */
 export function PainelNav() {
   const pathname = usePathname();
-  const condoId = /^\/painel\/c\/([^/]+)/.exec(pathname)?.[1];
-  const base = condoId ? `/painel/c/${condoId}` : null;
+  const { condoId } = parsePainelPath(pathname);
+
+  if (!condoId) {
+    return (
+      <nav aria-label="Menu do painel">
+        <ul className="flex flex-col gap-0.5">
+          <Item
+            href="/painel"
+            label="Condomínios"
+            icon={Building2}
+            active={pathname === '/painel'}
+          />
+        </ul>
+      </nav>
+    );
+  }
+
+  const base = `/painel/c/${condoId}`;
+  const isActive = (href: string) =>
+    href === '' ? pathname === base : pathname.startsWith(`${base}${href}`);
 
   return (
-    <nav aria-label="Menu do painel" className="-mx-1 overflow-x-auto px-1 md:overflow-visible">
-      <ul className="flex gap-1 md:flex-col">
-        <Item href="/painel" label="Condomínios" icon={Building2} active={pathname === '/painel'} />
-        {base &&
-          condoSections.map((s) => {
-            const href = `${base}${s.href}`;
-            const active = s.href === '' ? pathname === base : pathname.startsWith(href);
-            return <Item key={s.label} {...s} href={href} active={active} nested />;
-          })}
+    <nav aria-label="Menu do condomínio" className="flex flex-col gap-5">
+      <ul className="flex flex-col gap-0.5">
+        <Item href="/painel" label="Todos os condomínios" icon={ArrowLeft} />
+        <Item {...visaoGeral} href={base} active={isActive('')} />
       </ul>
+      {condoGroups.map((g) => (
+        <Group key={g.title} title={g.title}>
+          {g.items.map((s) => (
+            <Item key={s.href} {...s} href={`${base}${s.href}`} active={isActive(s.href)} />
+          ))}
+        </Group>
+      ))}
     </nav>
   );
 }

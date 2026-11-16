@@ -2,7 +2,8 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
-import { getMe, myUnits, staffGestoras } from './api';
+import type { CondominioDto } from '@condo/contracts';
+import { api, getMe, myUnits, staffGestoras } from './api';
 import { COOKIES } from './session';
 
 /** Gestora em uso no painel: a escolhida (se ainda válida) ou a primeira da pessoa. */
@@ -29,3 +30,9 @@ export async function moradorContext(unitId?: string) {
 /** Caminho base da API para a unidade do morador. */
 export const unitPath = (u: { condominioId: string; unitId: string }) =>
   `/condominios/${u.condominioId}/units/${u.unitId}`;
+
+/** Condomínios da gestora em uso (menu, seletor e visão consolidada; uma busca por request). */
+export const staffCondominios = cache(async (): Promise<CondominioDto[]> => {
+  const { gestora } = await staffContext();
+  return api<CondominioDto[]>('/condominios', { gestoraId: gestora.id });
+});

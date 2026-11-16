@@ -16,8 +16,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ActionForm, SubmitButton } from '@/components/action-form';
 import { Badge, ButtonLink, Card, EmptyState, Field } from '@/components/ui';
-import { api } from '@/lib/api';
-import { staffContext } from '@/lib/context';
+import { staffCondominios, staffContext } from '@/lib/context';
 import { todayMonth } from '@/lib/dates';
 import { load } from '@/lib/load';
 import { createCondominioAction } from './actions';
@@ -102,7 +101,7 @@ export default async function PainelPage({
 }) {
   const { gestora } = await staffContext();
   const q = ((await searchParams).q ?? '').trim();
-  const todos = await api<CondominioDto[]>('/condominios', { gestoraId: gestora.id });
+  const todos = await staffCondominios();
   const isAdmin = gestora.roles.some((r) => r.key === 'gestora_admin');
   const mes = todayMonth();
   const mesAnterior = previousMonth(mes);
