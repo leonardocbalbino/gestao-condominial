@@ -11,14 +11,17 @@ import { api, errorMessage } from '@/lib/api';
 import { optional, text, UserError, type ActionState } from '@/lib/action-state';
 import { staffContext } from '@/lib/context';
 
-/** Executa a chamada, revalida a página e devolve a mensagem para o formulário. */
+/**
+ * Executa a chamada, revalida a página (e as de baixo dela: a implantação aparece na
+ * Visão geral e em Configurações) e devolve a mensagem para o formulário.
+ */
 async function run(path: string, ok: string, call: () => Promise<unknown>): Promise<ActionState> {
   try {
     await call();
   } catch (error) {
     return { error: errorMessage(error) };
   }
-  revalidatePath(path);
+  revalidatePath(path, 'layout');
   return { ok };
 }
 
@@ -103,6 +106,12 @@ export async function inviteStaffAction(id: string, _: ActionState, form: FormDa
       email: text(form, 'email'),
       papel: text(form, 'papel'),
     }),
+  );
+}
+
+export async function resendInviteAction(id: string, assignmentId: string, _: ActionState) {
+  return run(`/painel/c/${id}`, 'Convite reenviado.', () =>
+    call(`/condominios/${id}/staff-invites/${assignmentId}/resend`, 'POST'),
   );
 }
 
