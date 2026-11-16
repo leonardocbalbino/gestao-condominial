@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Meu Condomínio",
+    "slug": "meu-condominio",
+    "scheme": "condominio",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "app.gestaocondominial.morador",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use o Face ID para entrar no aplicativo do seu condomínio."
+      }
+    },
+    "android": {
+      "package": "app.gestaocondominial.morador"
+    },
+    "plugins": ["expo-router", "expo-secure-store", "expo-local-authentication"],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

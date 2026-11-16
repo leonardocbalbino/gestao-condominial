@@ -12,3 +12,7 @@ coverage/
 .next/
 next-env.d.ts
 
+
+# Expo
+.expo/
+

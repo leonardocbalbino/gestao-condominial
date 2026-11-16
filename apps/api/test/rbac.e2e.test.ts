@@ -150,6 +150,7 @@ describe('síndico com escopo de condomínio', () => {
       {
         id: gestoraA,
         nome: 'Gestora A',
+        branding: {},
         roles: [
           { key: 'sindico', name: 'Síndico', scope: { type: 'condominio', condominioId: condoA1 } },
         ],
