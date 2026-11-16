@@ -29,6 +29,7 @@
   --color-on-danger: #ffffff;
   --color-sidebar: #0f172a;
   --color-on-sidebar: #f8fafc;
+  --color-on-sidebar-muted: #cbd5e1;
   --color-sidebar-active: #1e293b;
   --color-focus: #1d4ed8;
   --color-focus-on-dark: #60a5fa;
@@ -99,6 +100,11 @@ body {
 
 .bg-sidebar :focus-visible {
   outline-color: var(--color-focus-on-dark);
+}
+
+/* Painéis claros abertos sobre o menu (ex.: seletor de condomínio) voltam ao azul padrão. */
+.bg-sidebar .bg-surface :focus-visible {
+  outline-color: var(--color-focus);
 }
 
 /* Morador e telas públicas: alvos de toque ≥ 48px em tudo que é clicável (§7). */

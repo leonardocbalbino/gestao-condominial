@@ -99,6 +99,8 @@ export interface ColorPalette {
   /** Menu lateral do painel da gestora. */
   sidebar: string;
   onSidebar: string;
+  /** Itens inativos do menu lateral. */
+  onSidebarMuted: string;
   sidebarActive: string;
   /** Anel de foco (:focus-visible) sobre fundos claros. */
   focus: string;
@@ -131,6 +133,7 @@ export const lightColors: ColorPalette = {
   onDanger: '#FFFFFF',
   sidebar: '#0F172A',
   onSidebar: '#F8FAFC',
+  onSidebarMuted: '#CBD5E1',
   sidebarActive: '#1E293B',
   focus: '#1D4ED8',
   focusOnDark: '#60A5FA',
@@ -161,6 +164,7 @@ export const highContrastColors: ColorPalette = {
   onDanger: '#000000',
   sidebar: '#000000',
   onSidebar: '#FFFFFF',
+  onSidebarMuted: '#FFFFFF',
   sidebarActive: '#333333',
   focus: '#00E5FF',
   focusOnDark: '#00E5FF',

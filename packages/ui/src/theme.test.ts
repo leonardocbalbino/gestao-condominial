@@ -25,6 +25,8 @@ describe('paletas base', () => {
     [c.success, c.surface],
     [c.onSidebar, c.sidebar],
     [c.onSidebar, c.sidebarActive],
+    [c.onSidebarMuted, c.sidebar],
+    [c.onSidebarMuted, c.sidebarActive],
     [c.textMuted, c.background],
     [c.onPrimary, c.primaryHover],
     [c.info, c.surface],
