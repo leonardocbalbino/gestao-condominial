@@ -9,7 +9,9 @@ import {
   char,
   customType,
   inet,
+  integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -147,6 +149,70 @@ export const auditLog = pgTable('audit_log', {
   hash: char('hash', { length: 64 }).notNull().default(''),
 });
 
+// ---------------------------------------------------------------------------
+// 0002 — cadastro
+// ---------------------------------------------------------------------------
+
+export const block = pgTable('block', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  nome: text('nome').notNull(),
+  andares: integer('andares'),
+  createdAt: createdAt(),
+});
+
+export const UNIT_TYPES = ['apartamento', 'casa', 'sala', 'loja'] as const;
+
+export const unit = pgTable('unit', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  blockId: uuid('block_id'),
+  andar: integer('andar'),
+  numero: text('numero').notNull(),
+  tipo: text('tipo', { enum: UNIT_TYPES }).notNull(),
+  // numeric volta como string do driver: preserva a precisão da fração ideal.
+  fracaoIdeal: numeric('fracao_ideal', { precision: 12, scale: 10 }),
+  path: ltree('path').generatedAlwaysAs(
+    sql`text2ltree(app_scope_label('g', gestora_id) || '.' || app_scope_label('c', condominio_id) || '.' || app_scope_label('u', id))`,
+  ),
+  createdAt: createdAt(),
+});
+
+export const vehicle = pgTable('vehicle', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  unitId: uuid('unit_id').notNull(),
+  placa: varchar('placa', { length: 7 }).notNull(),
+  modelo: text('modelo'),
+  cor: text('cor'),
+  removidoEm: timestamp('removido_em', { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
+export const unitAccessGrant = pgTable('unit_access_grant', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  unitId: uuid('unit_id').notNull(),
+  personId: uuid('person_id').notNull(),
+  perfil: text('perfil', {
+    enum: ['proprietario', 'secundario', 'inquilino', 'dependente', 'hospede'],
+  }).notNull(),
+  permissoes: text('permissoes')
+    .array()
+    .notNull()
+    .default(sql`'{}'`),
+  roleAssignmentId: uuid('role_assignment_id'),
+  concedidoPor: uuid('concedido_por'),
+  inicio: timestamp('inicio', { withTimezone: true }).notNull().defaultNow(),
+  fim: timestamp('fim', { withTimezone: true }),
+  revogadoEm: timestamp('revogado_em', { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
 export const schema = {
   gestora,
   appUser,
@@ -159,4 +225,8 @@ export const schema = {
   rolePermission,
   roleAssignment,
   auditLog,
+  block,
+  unit,
+  vehicle,
+  unitAccessGrant,
 };

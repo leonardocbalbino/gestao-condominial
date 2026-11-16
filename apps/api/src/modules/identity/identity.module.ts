@@ -13,9 +13,14 @@ import { PasswordService } from './password.service';
 import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 import { TokenService } from './token.service';
+import { UnitAccessController } from './unit-access.controller';
+import { UnitAccessService } from './unit-access.service';
 import { UsersService } from './users.service';
 
-/** Dono de app_user, refresh_session, magic_link_token, role, role_permission, role_assignment. */
+/**
+ * Dono de app_user, refresh_session, magic_link_token, role, role_permission,
+ * role_assignment e unit_access_grant.
+ */
 @Module({
   imports: [
     OrgModule,
@@ -28,7 +33,7 @@ import { UsersService } from './users.service';
       }),
     }),
   ],
-  controllers: [AuthController, MeController, RolesController],
+  controllers: [AuthController, MeController, RolesController, UnitAccessController],
   providers: [
     AuthService,
     AuthorizationService,
@@ -36,6 +41,7 @@ import { UsersService } from './users.service';
     PasswordService,
     RolesService,
     TokenService,
+    UnitAccessService,
     UsersService,
     {
       provide: SECRET_BOX,

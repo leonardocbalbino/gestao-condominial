@@ -27,3 +27,22 @@ export function isValidCnpj(value: string): boolean {
 }
 
 export const normalizeDocument = onlyDigits;
+
+/**
+ * CPF mascarado para exibição (LGPD): mostra só os dígitos do meio, como faz a
+ * Receita em documentos públicos. Ex.: 12345678909 → ***.456.789-**.
+ */
+export function maskCpf(cpf: string): string {
+  const digits = onlyDigits(cpf);
+  if (digits.length !== 11) return '***.***.***-**';
+  return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
+}
+
+/** Placa normalizada (sem hífen/espaços, maiúsculas). Aceita padrão antigo e Mercosul. */
+export function normalizePlaca(value: string): string {
+  return value.replace(/[\s-]/g, '').toUpperCase();
+}
+
+export function isValidPlaca(value: string): boolean {
+  return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(normalizePlaca(value));
+}

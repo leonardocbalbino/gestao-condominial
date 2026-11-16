@@ -65,6 +65,11 @@ export class CondominioService {
     return toDto(row);
   }
 
+  /** RLS: condomínio de outra gestora simplesmente não existe aqui. */
+  async assertExists(id: string): Promise<void> {
+    if (!(await this.exists(id))) throw new NotFoundException('Condomínio não encontrado');
+  }
+
   async exists(id: string): Promise<boolean> {
     const { tx } = currentContext();
     const [row] = await tx

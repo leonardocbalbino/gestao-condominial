@@ -10,6 +10,11 @@ export type PermissionScope =
   | { type: 'gestora' }
   /** O recurso é o condomínio cujo id está no parâmetro de rota `param`. */
   | { type: 'condominio'; param: string }
+  /**
+   * O recurso é a unidade `unitParam` do condomínio `condominioParam`. O serviço precisa
+   * filtrar pelos dois ids (a unidade tem de pertencer ao condomínio da rota).
+   */
+  | { type: 'unit'; condominioParam: string; unitParam: string }
   /** Basta ter a permissão em algum escopo; o serviço filtra pelo que é acessível. */
   | { type: 'any' };
 

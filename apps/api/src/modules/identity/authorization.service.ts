@@ -2,10 +2,14 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { PermissionKey } from '@condo/contracts';
 import { sql } from 'drizzle-orm';
 import { currentContext } from '../../db/request-context';
-import { condominioScope, gestoraScope } from './scope';
+import { condominioScope, gestoraScope, unitScope } from './scope';
 
-/** Recurso alvo: gestora inteira, um condomínio, ou "qualquer escopo" (listagens filtradas). */
-export type AuthorizationTarget = { gestoraId: string; condominioId?: string } | 'any';
+/**
+ * Recurso alvo: gestora inteira, um condomínio, uma unidade do condomínio, ou "qualquer
+ * escopo" (listagens filtradas). Escopos maiores cobrem os menores (ltree `@>`).
+ */
+export type AuthorizationTarget =
+  { gestoraId: string; condominioId?: string; unitId?: string } | 'any';
 
 export type Decision = 'allow' | 'deny' | 'mfa_required';
 
@@ -85,7 +89,10 @@ export class AuthorizationService {
     return result.rows.map((r) => r.scope_path);
   }
 
-  private pathOf(target: { gestoraId: string; condominioId?: string }): string {
+  private pathOf(target: { gestoraId: string; condominioId?: string; unitId?: string }): string {
+    if (target.condominioId && target.unitId) {
+      return unitScope(target.gestoraId, target.condominioId, target.unitId);
+    }
     return target.condominioId
       ? condominioScope(target.gestoraId, target.condominioId)
       : gestoraScope(target.gestoraId);

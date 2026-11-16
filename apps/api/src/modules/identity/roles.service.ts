@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type {
+  AssignedScope,
   CreateRoleAssignmentRequest,
   CreateRoleRequest,
   PermissionKey,
@@ -19,7 +21,7 @@ import { role, roleAssignment, rolePermission } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
 import { CondominioService } from '../org/condominio.service';
 import { AuthorizationService, type AuthorizationTarget } from './authorization.service';
-import { condominioScope, gestoraScope } from './scope';
+import { condominioScope, gestoraScope, parseScope, unitScope } from './scope';
 import { UsersService } from './users.service';
 
 type RoleRow = typeof role.$inferSelect;
@@ -28,16 +30,15 @@ export interface UserAssignment {
   gestoraId: string;
   roleKey: string;
   roleName: string;
-  scope: RoleScope;
+  scope: AssignedScope;
 }
 
 /** Converte o caminho ltree de volta para o escopo do contrato. */
-function scopeFromPath(path: string): RoleScope {
-  const [, condominio] = path.split('.');
-  if (!condominio) return { type: 'gestora' };
-  const hex = condominio.slice(1);
-  const condominioId = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-  return { type: 'condominio', condominioId };
+function scopeFromPath(path: string): AssignedScope {
+  const { condominioId, unitId } = parseScope(path);
+  if (condominioId && unitId) return { type: 'unit', condominioId, unitId };
+  if (condominioId) return { type: 'condominio', condominioId };
+  return { type: 'gestora' };
 }
 
 @Injectable()
@@ -102,6 +103,10 @@ export class RolesService {
 
     const target = await this.resolveTarget(gestoraId, input.scope);
     const roleRow = await this.findAssignableRole(input.roleId, gestoraId);
+    // O papel de morador vale só no escopo de uma unidade: nasce do vínculo com a unidade.
+    if (roleRow.gestoraId === null && roleRow.key === 'morador') {
+      throw new BadRequestException('Morador é vinculado pela unidade, não por atribuição direta');
+    }
     if (!(await this.authz.can('role:manage', target))) throw new ForbiddenException();
     const permissions = await this.permissionsOf(roleRow.id);
     if (!(await this.authz.holdsAll(permissions, target))) {
@@ -150,6 +155,44 @@ export class RolesService {
       scope: { type: 'gestora' },
       grantedBy: actorId,
     });
+  }
+
+  /**
+   * Papel 'morador' no escopo de uma unidade, criado pelo vínculo pessoa↔unidade.
+   * Quem chama já checou a permissão (pessoa:manage no condomínio) e audita o vínculo.
+   */
+  async assignMoradorToUnit(input: {
+    userId: string;
+    condominioId: string;
+    unitId: string;
+    validFrom?: Date | undefined;
+    validUntil?: Date | undefined;
+  }): Promise<RoleAssignmentDto> {
+    const { tx, gestoraId, userId: actorId } = currentContext();
+    if (!gestoraId) throw new Error('Vínculo com unidade exige gestora em contexto');
+    const [roleRow] = await tx
+      .select()
+      .from(role)
+      .where(and(isNull(role.gestoraId), eq(role.key, 'morador')));
+    if (!roleRow) throw new Error('Papel de sistema inexistente: morador');
+    return this.insertAssignment({
+      gestoraId,
+      userId: input.userId,
+      role: roleRow,
+      scope: { type: 'unit', condominioId: input.condominioId, unitId: input.unitId },
+      validFrom: input.validFrom,
+      validUntil: input.validUntil,
+      grantedBy: actorId,
+    });
+  }
+
+  /** Revoga uma atribuição (ex.: fim do vínculo com a unidade). Quem chama audita. */
+  async revokeAssignment(assignmentId: string): Promise<void> {
+    const { tx } = currentContext();
+    await tx
+      .update(roleAssignment)
+      .set({ revokedAt: sql`now()` })
+      .where(and(eq(roleAssignment.id, assignmentId), isNull(roleAssignment.revokedAt)));
   }
 
   /** Atribuições ativas do usuário em todas as gestoras (política RLS "self"). */
@@ -214,7 +257,7 @@ export class RolesService {
     gestoraId: string;
     userId: string;
     role: RoleRow;
-    scope: RoleScope;
+    scope: AssignedScope;
     validFrom?: Date | undefined;
     validUntil?: Date | undefined;
     grantedBy: string | null;
@@ -223,7 +266,9 @@ export class RolesService {
     const scopePath =
       input.scope.type === 'gestora'
         ? gestoraScope(input.gestoraId)
-        : condominioScope(input.gestoraId, input.scope.condominioId);
+        : input.scope.type === 'condominio'
+          ? condominioScope(input.gestoraId, input.scope.condominioId)
+          : unitScope(input.gestoraId, input.scope.condominioId, input.scope.unitId);
     const [row] = await tx
       .insert(roleAssignment)
       .values({

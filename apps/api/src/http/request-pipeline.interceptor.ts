@@ -116,12 +116,21 @@ export class RequestPipelineInterceptor implements NestInterceptor {
         return { gestoraId };
       case 'any':
         return 'any';
-      case 'condominio': {
-        const id = uuidSchema.safeParse(request.params[scope.param]);
-        if (!id.success) throw new BadRequestException('Identificador inválido');
-        return { gestoraId, condominioId: id.data };
-      }
+      case 'condominio':
+        return { gestoraId, condominioId: this.uuidParam(request, scope.param) };
+      case 'unit':
+        return {
+          gestoraId,
+          condominioId: this.uuidParam(request, scope.condominioParam),
+          unitId: this.uuidParam(request, scope.unitParam),
+        };
     }
+  }
+
+  private uuidParam(request: Request, name: string): string {
+    const id = uuidSchema.safeParse(request.params[name]);
+    if (!id.success) throw new BadRequestException('Identificador inválido');
+    return id.data;
   }
 
   private assertAudited(request: Request): void {

@@ -19,6 +19,12 @@ export const roleScopeSchema = z.discriminatedUnion('type', [
 ]);
 export type RoleScope = z.infer<typeof roleScopeSchema>;
 
+/**
+ * Escopo como aparece nas respostas: inclui a unidade, criada só pelo vínculo
+ * pessoa↔unidade (nunca diretamente por /role-assignments).
+ */
+export type AssignedScope = RoleScope | { type: 'unit'; condominioId: string; unitId: string };
+
 export const createRoleAssignmentRequestSchema = z
   .object({
     userId: z.uuid(),
@@ -50,7 +56,7 @@ export interface RoleAssignmentDto {
   id: string;
   userId: string;
   roleId: string;
-  scope: RoleScope;
+  scope: AssignedScope;
   validFrom: string;
   validUntil: string | null;
 }
@@ -63,6 +69,6 @@ export interface MeDto {
   gestoras: {
     id: string;
     nome: string;
-    roles: { key: string; name: string; scope: RoleScope }[];
+    roles: { key: string; name: string; scope: AssignedScope }[];
   }[];
 }
