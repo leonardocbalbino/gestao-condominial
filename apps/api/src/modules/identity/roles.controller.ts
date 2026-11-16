@@ -8,6 +8,7 @@ import {
   type InviteCondominioStaffRequest,
   type RoleAssignmentDto,
   type RoleDto,
+  type StaffInviteDto,
 } from '@condo/contracts';
 import { RequirePermission } from '../../http/access';
 import { ZodPipe } from '../../http/zod.pipe';
@@ -46,5 +47,21 @@ export class RolesController {
     @Body(new ZodPipe(inviteCondominioStaffRequestSchema)) body: InviteCondominioStaffRequest,
   ): Promise<RoleAssignmentDto> {
     return this.roles.inviteCondominioStaff(condominioId, body);
+  }
+
+  /** Síndicos e conselheiros convidados, com status (pendente/aceito). */
+  @Get('condominios/:condominioId/staff-invites')
+  @RequirePermission('role:manage', { type: 'condominio', param: 'condominioId' })
+  listInvites(@Param('condominioId') condominioId: string): Promise<StaffInviteDto[]> {
+    return this.roles.listCondominioStaff(condominioId);
+  }
+
+  @Post('condominios/:condominioId/staff-invites/:assignmentId/resend')
+  @RequirePermission('role:manage', { type: 'condominio', param: 'condominioId' })
+  resend(
+    @Param('condominioId') condominioId: string,
+    @Param('assignmentId') assignmentId: string,
+  ): Promise<StaffInviteDto> {
+    return this.roles.resendStaffInvite(condominioId, assignmentId);
   }
 }

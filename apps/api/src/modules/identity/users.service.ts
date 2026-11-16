@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, gt, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { currentContext } from '../../db/request-context';
 import { appUser, roleAssignment } from '../../db/schema';
 
@@ -18,6 +18,12 @@ export class UsersService {
     const { tx } = currentContext();
     const [user] = await tx.select().from(appUser).where(eq(appUser.id, id));
     return user;
+  }
+
+  async findMany(ids: string[]): Promise<AppUser[]> {
+    if (ids.length === 0) return [];
+    const { tx } = currentContext();
+    return tx.select().from(appUser).where(inArray(appUser.id, ids));
   }
 
   async findOrCreateByEmail(email: string): Promise<AppUser> {

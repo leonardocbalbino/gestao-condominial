@@ -14,9 +14,10 @@ import type {
   RoleAssignmentDto,
   RoleDto,
   RoleScope,
+  StaffInviteDto,
 } from '@condo/contracts';
 import { DELEGABLE_WITHOUT_HOLDING } from '@condo/contracts';
-import { and, asc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { isUniqueViolation } from '../../db/errors';
 import { currentContext } from '../../db/request-context';
 import { role, roleAssignment, rolePermission } from '../../db/schema';
@@ -29,6 +30,9 @@ import { condominioScope, gestoraScope, parseScope, unitScope } from './scope';
 import { UsersService } from './users.service';
 
 type RoleRow = typeof role.$inferSelect;
+
+/** Papéis convidados pela Visão geral do condomínio. */
+const STAFF_INVITE_ROLES = ['sindico', 'conselheiro'] as const;
 
 export interface UserAssignment {
   gestoraId: string;
@@ -212,6 +216,70 @@ export class RolesService {
       after: { ...dto, papel: input.papel },
     });
     return dto;
+  }
+
+  /**
+   * Síndicos e conselheiros do condomínio (atribuições ativas no escopo dele, mais
+   * recentes primeiro). Aceito = a pessoa já entrou e configurou o 2FA, obrigatório no
+   * primeiro acesso desses papéis.
+   */
+  async listCondominioStaff(condominioId: string): Promise<StaffInviteDto[]> {
+    const { tx, gestoraId } = currentContext();
+    if (!gestoraId) throw new Error('Lista de equipe exige gestora em contexto');
+    const rows = await tx
+      .select({
+        id: roleAssignment.id,
+        userId: roleAssignment.userId,
+        createdAt: roleAssignment.createdAt,
+        papel: role.key,
+        papelNome: role.name,
+      })
+      .from(roleAssignment)
+      .innerJoin(role, eq(role.id, roleAssignment.roleId))
+      .where(
+        and(
+          sql`${roleAssignment.scopePath} = ${condominioScope(gestoraId, condominioId)}::ltree`,
+          isNull(roleAssignment.revokedAt),
+          inArray(role.key, [...STAFF_INVITE_ROLES]),
+        ),
+      )
+      .orderBy(desc(roleAssignment.createdAt));
+    const userIds = [...new Set(rows.map((r) => r.userId))];
+    const users = new Map((await this.users.findMany(userIds)).map((u) => [u.id, u]));
+    const names = await this.persons.namesByUserIds(userIds);
+    return rows.flatMap((r) => {
+      const user = users.get(r.userId);
+      if (!user) return [];
+      return [
+        {
+          assignmentId: r.id,
+          nome: names.get(r.userId) ?? null,
+          email: user.email,
+          papel: r.papel,
+          papelNome: r.papelNome,
+          status: user.totpEnabledAt ? 'aceito' : 'pendente',
+          convidadoEm: r.createdAt.toISOString(),
+        } satisfies StaffInviteDto,
+      ];
+    });
+  }
+
+  /** Reenvia o link de acesso de um convite ainda não aceito. */
+  async resendStaffInvite(condominioId: string, assignmentId: string): Promise<StaffInviteDto> {
+    const invite = (await this.listCondominioStaff(condominioId)).find(
+      (i) => i.assignmentId === assignmentId,
+    );
+    if (!invite) throw new NotFoundException('Convite não encontrado');
+    if (invite.status === 'aceito') throw new ConflictException('Esta pessoa já aceitou o convite');
+    const user = await this.users.findByEmail(invite.email);
+    if (!user) throw new NotFoundException('Convite não encontrado');
+    await this.magicLinks.issue(user.id, user.email, 'invite');
+    await this.audit.record({
+      action: 'role_assignment.invite_resent',
+      resourceType: 'role_assignment',
+      resourceId: assignmentId,
+    });
+    return invite;
   }
 
   /**
