@@ -20,6 +20,16 @@ const envSchema = z.object({
   MAIL_FROM: z.string().default('Gestão Condominial <nao-responda@condominio.local>'),
   APP_WEB_URL: z.url(),
   AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),
+  // Storage S3-compatível (MinIO em dev), bucket com versionamento ligado.
+  S3_ENDPOINT: z.url(),
+  S3_REGION: z.string().default('us-east-1'),
+  S3_BUCKET: z.string().min(3),
+  S3_ACCESS_KEY_ID: z.string().min(3),
+  S3_SECRET_ACCESS_KEY: z.string().min(8),
+  S3_FORCE_PATH_STYLE: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
 });
 
 export type Env = z.infer<typeof envSchema>;

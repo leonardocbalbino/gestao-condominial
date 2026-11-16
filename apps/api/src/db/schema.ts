@@ -8,6 +8,7 @@ import {
   boolean,
   char,
   customType,
+  date,
   inet,
   integer,
   jsonb,
@@ -213,6 +214,103 @@ export const unitAccessGrant = pgTable('unit_access_grant', {
   createdAt: createdAt(),
 });
 
+// ---------------------------------------------------------------------------
+// 0003 — anexos e razão
+// ---------------------------------------------------------------------------
+
+const money = (name: string) => bigint(name, { mode: 'number' });
+
+export const attachment = pgTable('attachment', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  nomeArquivo: text('nome_arquivo').notNull(),
+  contentType: text('content_type').notNull(),
+  tamanho: bigint('tamanho', { mode: 'number' }).notNull(),
+  sha256: char('sha256', { length: 64 }).notNull(),
+  storageKey: text('storage_key').notNull(),
+  uploadedBy: uuid('uploaded_by'),
+  createdAt: createdAt(),
+});
+
+export const ACCOUNT_NATUREZAS = ['ativo', 'passivo', 'patrimonio', 'receita', 'despesa'] as const;
+export const ACCOUNT_GRUPOS = ['ordinaria', 'fundo_reserva', 'obras'] as const;
+export const ACCOUNT_PAPEIS = [
+  'banco',
+  'saldo_inicial',
+  'taxa_ordinaria',
+  'fundo_reserva',
+  'multa',
+  'juros',
+  'aluguel_vaga',
+  'tarifa_bancaria',
+] as const;
+
+export const account = pgTable('account', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id'),
+  codigo: text('codigo').notNull(),
+  nome: text('nome').notNull(),
+  natureza: text('natureza', { enum: ACCOUNT_NATUREZAS }).notNull(),
+  grupo: text('grupo', { enum: ACCOUNT_GRUPOS }),
+  analitica: boolean('analitica').notNull(),
+  caixa: boolean('caixa').notNull().default(false),
+  papelSistema: text('papel_sistema', { enum: ACCOUNT_PAPEIS }),
+  ativa: boolean('ativa').notNull().default(true),
+  createdAt: createdAt(),
+});
+
+export const PERIOD_STATUS = ['aberto', 'em_revisao', 'aprovado', 'publicado'] as const;
+
+export const accountingPeriod = pgTable('accounting_period', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  mes: date('mes', { mode: 'string' }).notNull(),
+  status: text('status', { enum: PERIOD_STATUS }).notNull().default('aberto'),
+  hash: char('hash', { length: 64 }),
+  fechadoEm: timestamp('fechado_em', { withTimezone: true }),
+  fechadoPor: uuid('fechado_por'),
+  createdAt: createdAt(),
+});
+
+export const ENTRY_ORIGENS = [
+  'manual',
+  'saldo_inicial',
+  'recebimento',
+  'pagamento',
+  'tarifa',
+  'estorno',
+] as const;
+
+export const journalEntry = pgTable('journal_entry', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  periodId: uuid('period_id').notNull(),
+  seq: bigint('seq', { mode: 'number' }).generatedAlwaysAsIdentity(),
+  dataCompetencia: date('data_competencia', { mode: 'string' }).notNull(),
+  dataCaixa: date('data_caixa', { mode: 'string' }).notNull(),
+  historico: text('historico').notNull(),
+  origem: text('origem', { enum: ENTRY_ORIGENS }).notNull(),
+  origemRef: text('origem_ref'),
+  estornoDe: uuid('estorno_de'),
+  motivoEstorno: text('motivo_estorno'),
+  comprovanteId: uuid('comprovante_id'),
+  createdBy: uuid('created_by'),
+  createdAt: createdAt(),
+});
+
+export const journalLine = pgTable('journal_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  entryId: uuid('entry_id').notNull(),
+  accountId: uuid('account_id').notNull(),
+  valorCentavos: money('valor_centavos').notNull(),
+});
+
 export const schema = {
   gestora,
   appUser,
@@ -229,4 +327,9 @@ export const schema = {
   unit,
   vehicle,
   unitAccessGrant,
+  attachment,
+  account,
+  accountingPeriod,
+  journalEntry,
+  journalLine,
 };

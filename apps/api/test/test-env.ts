@@ -18,6 +18,11 @@ const defaults: Record<string, string> = {
   SMTP_URL: 'smtp://localhost:1025',
   APP_WEB_URL: 'http://localhost:3000',
   AUTH_RATE_LIMIT_PER_MINUTE: '1000',
+  // Os testes trocam o storage por um em memória; estes valores só passam na validação.
+  S3_ENDPOINT: 'http://localhost:9000',
+  S3_BUCKET: 'condo-attachments',
+  S3_ACCESS_KEY_ID: 'test-access-key',
+  S3_SECRET_ACCESS_KEY: 'test-secret-key',
 };
 
 export const testEnv: Record<string, string> = Object.fromEntries(

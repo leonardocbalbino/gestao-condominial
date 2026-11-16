@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { totpCode, totpStep, TOTP_STEP_SECONDS } from '../../src/common/totp';
 import { AppModule } from '../../src/app.module';
+import { OBJECT_STORAGE, type ObjectStorage } from '../../src/modules/documents/storage';
 import { MAILER, type MailMessage, type Mailer } from '../../src/modules/identity/mailer';
 import type { TestUser } from './db';
 
@@ -21,20 +22,40 @@ export class FakeMailer implements Mailer {
   }
 }
 
+/** Storage em memória: os testes não dependem de MinIO. */
+export class MemoryStorage implements ObjectStorage {
+  readonly objects = new Map<string, Buffer>();
+
+  put(key: string, body: Buffer): Promise<void> {
+    this.objects.set(key, Buffer.from(body));
+    return Promise.resolve();
+  }
+
+  get(key: string): Promise<Buffer> {
+    const body = this.objects.get(key);
+    if (!body) return Promise.reject(new Error(`Objeto inexistente: ${key}`));
+    return Promise.resolve(body);
+  }
+}
+
 export interface TestApp {
   app: INestApplication;
   http: () => ReturnType<typeof request>;
   mailer: FakeMailer;
+  storage: MemoryStorage;
   close: () => Promise<void>;
 }
 
 export async function createTestApp(extraModules: unknown[] = []): Promise<TestApp> {
   const mailer = new FakeMailer();
+  const storage = new MemoryStorage();
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule, ...(extraModules as never[])],
   })
     .overrideProvider(MAILER)
     .useValue(mailer)
+    .overrideProvider(OBJECT_STORAGE)
+    .useValue(storage)
     .compile();
   const app = moduleRef.createNestApplication({ logger: false });
   await app.init();
@@ -42,6 +63,7 @@ export async function createTestApp(extraModules: unknown[] = []): Promise<TestA
     app,
     http: () => request(app.getHttpServer()),
     mailer,
+    storage,
     close: () => app.close(),
   };
 }

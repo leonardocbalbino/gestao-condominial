@@ -27,6 +27,7 @@ export const PERMISSIONS = {
   'inadimplencia:read': 'Ver inadimplência nominal',
   'comunicado:publish': 'Publicar comunicados',
   'comunicado:read': 'Ler comunicados',
+  'documento:upload': 'Enviar comprovantes e documentos',
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
