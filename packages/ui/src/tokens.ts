@@ -53,6 +53,21 @@ export const typography = {
   },
 } as const;
 
+/**
+ * Escala do painel da equipe (ADR-0009): mais densa que a do morador. Em px, com a raiz
+ * do painel em 16px; a web converte para rem, então "A+" continua ampliando tudo.
+ */
+export const panelTypography = {
+  page: { size: 28, weight: '700' },
+  card: { size: 18, weight: '600' },
+  body: { size: 15, weight: '400' },
+  label: { size: 14, weight: '600' },
+  caption: { size: 13, weight: '500' },
+} as const;
+
+/** Alturas de controle do painel (ADR-0009). O morador mantém ≥ 48px. */
+export const panelControl = { sm: 36, md: 44 } as const;
+
 export interface ColorPalette {
   background: string;
   surface: string;
@@ -64,6 +79,9 @@ export interface ColorPalette {
   divider: string;
   primary: string;
   onPrimary: string;
+  primaryHover: string;
+  /** Texto/realce informativo (chip "Em revisão"). */
+  info: string;
   /** Fundo suave da cor principal (chip "Vence em", item ativo do menu). */
   primarySoft: string;
   onPrimarySoft: string;
@@ -82,7 +100,10 @@ export interface ColorPalette {
   sidebar: string;
   onSidebar: string;
   sidebarActive: string;
+  /** Anel de foco (:focus-visible) sobre fundos claros. */
   focus: string;
+  /** Anel de foco sobre o menu lateral escuro. */
+  focusOnDark: string;
 }
 
 export const lightColors: ColorPalette = {
@@ -94,6 +115,8 @@ export const lightColors: ColorPalette = {
   divider: '#E2E8F0',
   primary: '#1D4ED8',
   onPrimary: '#FFFFFF',
+  primaryHover: '#1E40AF',
+  info: '#1E3A8A',
   primarySoft: '#DBEAFE',
   onPrimarySoft: '#1E3A8A',
   success: '#15803D',
@@ -109,7 +132,8 @@ export const lightColors: ColorPalette = {
   sidebar: '#0F172A',
   onSidebar: '#F8FAFC',
   sidebarActive: '#1E293B',
-  focus: '#F59E0B',
+  focus: '#1D4ED8',
+  focusOnDark: '#60A5FA',
 };
 
 export const highContrastColors: ColorPalette = {
@@ -121,6 +145,8 @@ export const highContrastColors: ColorPalette = {
   divider: '#FFFFFF',
   primary: '#FFD400',
   onPrimary: '#000000',
+  primaryHover: '#FFE14D',
+  info: '#9CC9FF',
   primarySoft: '#000000',
   onPrimarySoft: '#FFD400',
   success: '#5CFF7A',
@@ -137,4 +163,5 @@ export const highContrastColors: ColorPalette = {
   onSidebar: '#FFFFFF',
   sidebarActive: '#333333',
   focus: '#00E5FF',
+  focusOnDark: '#00E5FF',
 };

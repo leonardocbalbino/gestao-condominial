@@ -54,6 +54,14 @@ export function accessiblePrimary(primary: string): { primary: string; onPrimary
   return { primary: current, onPrimary: WHITE };
 }
 
+/** Cor do hover do botão principal: um pouco mais escura (ou mais clara, se o texto é preto). */
+export function hoverTone(primary: string, onPrimary: string): string {
+  const [r, g, b] = parseHex(primary);
+  return onPrimary === WHITE
+    ? toHex([r * 0.82, g * 0.82, b * 0.82])
+    : toHex([r + (255 - r) * 0.3, g + (255 - g) * 0.3, b + (255 - b) * 0.3]);
+}
+
 /**
  * Tons suaves derivados da cor da marca: fundo = 85% branco + 15% marca; texto sobre ele
  * = a marca escurecida até atingir AA. Assim o chip e o menu ativo acompanham o white label.
@@ -77,7 +85,12 @@ export function createTheme(options: ThemeOptions = {}): Theme {
   // No alto contraste a marca é ignorada: a legibilidade tem prioridade sobre o branding.
   if (!options.highContrast && options.branding?.primaryColor) {
     const brand = accessiblePrimary(options.branding.primaryColor);
-    colors = { ...colors, ...brand, ...softTones(brand.primary) };
+    colors = {
+      ...colors,
+      ...brand,
+      primaryHover: hoverTone(brand.primary, brand.onPrimary),
+      ...softTones(brand.primary),
+    };
   }
 
   const fontSize = Object.fromEntries(

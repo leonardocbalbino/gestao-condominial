@@ -26,7 +26,20 @@ describe('paletas base', () => {
     [c.onSidebar, c.sidebar],
     [c.onSidebar, c.sidebarActive],
     [c.textMuted, c.background],
+    [c.onPrimary, c.primaryHover],
+    [c.info, c.surface],
+    [c.info, c.primarySoft],
   ];
+
+  it.each([
+    ['clara', lightColors],
+    ['alto contraste', highContrastColors],
+  ])('paleta %s: anel de foco tem 3:1 sobre o fundo e sobre o menu (WCAG 2.4.11)', (_n, p) => {
+    expect(contrastRatio(p.focus, p.surface)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(p.focus, p.background)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(p.focusOnDark, p.sidebar)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(p.focusOnDark, p.sidebarActive)).toBeGreaterThanOrEqual(3);
+  });
 
   it.each([
     ['clara', lightColors],
@@ -59,6 +72,16 @@ describe('accessiblePrimary (white label)', () => {
     (brand) => {
       const { colors } = createTheme({ branding: { primaryColor: brand } });
       expect(contrastRatio(colors.onPrimarySoft, colors.primarySoft)).toBeGreaterThanOrEqual(
+        WCAG_AA_TEXT,
+      );
+    },
+  );
+
+  it.each(['#FFEB3B', '#00BCD4', '#7B1FA2', '#1D4ED8', '#E91E63'])(
+    'hover da marca %s mantém o texto do botão AA',
+    (brand) => {
+      const { colors } = createTheme({ branding: { primaryColor: brand } });
+      expect(contrastRatio(colors.onPrimary, colors.primaryHover)).toBeGreaterThanOrEqual(
         WCAG_AA_TEXT,
       );
     },
