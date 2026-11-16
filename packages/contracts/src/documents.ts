@@ -28,6 +28,16 @@ export function isValidCnpj(value: string): boolean {
 
 export const normalizeDocument = onlyDigits;
 
+/** Máscara de CNPJ enquanto se digita: '11222333000181' → '11.222.333/0001-81'. */
+export function formatCnpj(value: string): string {
+  return onlyDigits(value)
+    .slice(0, 14)
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+}
+
 /**
  * CPF mascarado para exibição (LGPD): mostra só os dígitos do meio, como faz a
  * Receita em documentos públicos. Ex.: 12345678909 → ***.456.789-**.
