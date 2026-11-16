@@ -93,6 +93,11 @@ export class PaymentAccountService {
     };
   }
 
+  /** Provedor da conta, ou nulo se o condomínio ainda não abriu a conta de pagamentos. */
+  async providerOf(condominioId: string): Promise<string | null> {
+    return (await this.find(condominioId))?.provider ?? null;
+  }
+
   /** Credenciais decifradas para falar com o broker. Nunca devolver pela API nem logar. */
   async credentials(condominioId: string): Promise<ProviderAccount & { provider: string }> {
     const row = await this.find(condominioId);

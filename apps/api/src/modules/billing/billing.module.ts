@@ -45,6 +45,6 @@ import { WebhookService } from './webhook.service';
     ReconciliationService,
     WebhookService,
   ],
-  exports: [ChargeService],
+  exports: [ChargeService, PaymentAccountService],
 })
 export class BillingModule {}

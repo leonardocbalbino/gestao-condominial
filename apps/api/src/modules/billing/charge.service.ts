@@ -15,7 +15,7 @@ import {
   type InadimplenciaDto,
   type MyChargeDto,
 } from '@condo/contracts';
-import { and, asc, desc, eq, inArray, lt, ne } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, lt, ne } from 'drizzle-orm';
 import { todayInBrazil } from '../../common/dates';
 import { currentContext } from '../../db/request-context';
 import { charge, chargeItem } from '../../db/schema';
@@ -60,6 +60,18 @@ export class ChargeService implements OnModuleInit {
       ...(competencia ? [eq(charge.competencia, `${competencia}-01`)] : []),
     ]);
     return this.toDtos(condominioId, rows);
+  }
+
+  /** Quantas cobranças já foram emitidas no broker (emitidas ou pagas). */
+  async countEmitted(condominioId: string): Promise<number> {
+    const { tx } = currentContext();
+    const [row] = await tx
+      .select({ n: count() })
+      .from(charge)
+      .where(
+        and(eq(charge.condominioId, condominioId), inArray(charge.status, ['emitida', 'paga'])),
+      );
+    return row?.n ?? 0;
   }
 
   /** Cobranças da unidade, como o morador vê: título simples e valor já atualizado. */

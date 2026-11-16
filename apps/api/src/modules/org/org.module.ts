@@ -22,6 +22,6 @@ import { VehicleService } from './vehicle.service';
     UnitService,
     VehicleService,
   ],
-  exports: [CondominioService, GestoraService, PersonService, UnitService],
+  exports: [BlockService, CondominioService, GestoraService, PersonService, UnitService],
 })
 export class OrgModule {}
