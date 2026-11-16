@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Branding } from './org';
 import { isPermissionKey, type PermissionKey } from './permissions';
 
 export const createRoleRequestSchema = z.object({
@@ -69,6 +70,8 @@ export interface MeDto {
   gestoras: {
     id: string;
     nome: string;
+    /** Identidade visual da gestora (white label do web e do app). */
+    branding: Branding;
     roles: { key: string; name: string; scope: AssignedScope }[];
   }[];
 }

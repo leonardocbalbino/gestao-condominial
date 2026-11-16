@@ -35,13 +35,14 @@ export class GestoraService {
     return rows.map(toDto);
   }
 
-  async namesByIds(ids: string[]): Promise<Map<string, string>> {
+  /** Nome e identidade visual (white label) das gestoras visíveis ao usuário. */
+  async summariesByIds(ids: string[]): Promise<Map<string, { nome: string; branding: Branding }>> {
     if (ids.length === 0) return new Map();
     const { tx } = currentContext();
     const rows = await tx
-      .select({ id: gestora.id, nome: gestora.nome })
+      .select({ id: gestora.id, nome: gestora.nome, branding: gestora.branding })
       .from(gestora)
       .where(inArray(gestora.id, ids));
-    return new Map(rows.map((r) => [r.id, r.nome]));
+    return new Map(rows.map((r) => [r.id, { nome: r.nome, branding: r.branding as Branding }]));
   }
 }

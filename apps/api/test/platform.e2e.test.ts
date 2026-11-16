@@ -75,6 +75,7 @@ describe('super admin da plataforma', () => {
       {
         id: gestoraId,
         nome: 'Gestora Nova',
+        branding: { primaryColor: '#7B1FA2' },
         roles: [expect.objectContaining({ key: 'gestora_admin' })],
       },
     ]);

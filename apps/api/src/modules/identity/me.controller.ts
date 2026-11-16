@@ -22,12 +22,16 @@ export class MeController {
     if (!user) throw new NotFoundException();
 
     const assignments = await this.roles.activeAssignmentsOfCurrentUser();
-    const names = await this.gestoras.namesByIds([...new Set(assignments.map((a) => a.gestoraId))]);
+    const summaries = await this.gestoras.summariesByIds([
+      ...new Set(assignments.map((a) => a.gestoraId)),
+    ]);
     const byGestora = new Map<string, MeDto['gestoras'][number]>();
     for (const a of assignments) {
+      const summary = summaries.get(a.gestoraId);
       const entry = byGestora.get(a.gestoraId) ?? {
         id: a.gestoraId,
-        nome: names.get(a.gestoraId) ?? '',
+        nome: summary?.nome ?? '',
+        branding: summary?.branding ?? {},
         roles: [],
       };
       entry.roles.push({ key: a.roleKey, name: a.roleName, scope: a.scope });

@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens do @condo/ui. Os valores abaixo são o tema padrão; o layout sobrescreve as
+ * mesmas variáveis em tempo de execução (cor da gestora, alto contraste), sem rebuild.
+ */
+@theme {
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-text: #14171f;
+  --color-text-muted: #4a5160;
+  --color-border: #c9ced8;
+  --color-primary: #1d4ed8;
+  --color-on-primary: #ffffff;
+  --color-success: #166534;
+  --color-warning: #92400e;
+  --color-danger: #b91c1c;
+  --color-on-danger: #ffffff;
+  --color-focus: #f59e0b;
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Fonte base de 18px (público com pouca familiaridade com tecnologia), ajustável. */
+html {
+  font-size: calc(112.5% * var(--font-scale, 1));
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+/* Foco sempre visível e com contraste (WCAG 2.4.7). */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Alvos de toque ≥ 48px em tudo que é clicável. */
+button,
+[role='button'],
+a.touch,
+input,
+select,
+textarea {
+  min-height: 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
