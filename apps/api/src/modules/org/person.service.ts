@@ -107,6 +107,18 @@ export class PersonService {
     return new Map(rows.map((r) => [r.id, { nome: r.nome, cpf: r.cpf, email: r.email }]));
   }
 
+  /** Nome da pessoa ligada ao login da requisição, nesta gestora. */
+  async nameOfCurrentUser(): Promise<string | null> {
+    const { tx, userId } = currentContext();
+    if (!userId) return null;
+    const [row] = await tx
+      .select({ nome: person.nome })
+      .from(person)
+      .where(eq(person.userId, userId))
+      .limit(1);
+    return row?.nome ?? null;
+  }
+
   async get(id: string): Promise<PersonDto> {
     const { tx } = currentContext();
     const [row] = await tx.select().from(person).where(eq(person.id, id));

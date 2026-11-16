@@ -82,6 +82,7 @@ describe('comunicados', () => {
     expect(home.body).toMatchObject({
       condominioNome: 'Residencial Comunicados',
       unidade: '12',
+      primeiroNome: 'Dona',
       pendencia: null,
       comunicadosNaoLidos: [{ id: announcementId, lido: false }],
       avisosDoDia: [],

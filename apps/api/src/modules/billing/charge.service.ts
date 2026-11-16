@@ -7,10 +7,12 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 import {
+  daysBetween,
   nomeDoMes,
   valorAtualizado,
   type ChargeDto,
   type ChargeStatus,
+  type InadimplenciaDto,
   type MyChargeDto,
 } from '@condo/contracts';
 import { and, asc, desc, eq, inArray, lt, ne } from 'drizzle-orm';
@@ -30,17 +32,6 @@ import { splitLargestRemainder } from './rateio';
 import { CHARGE_EMIT_TOPIC } from './rateio.service';
 
 type ChargeRow = typeof charge.$inferSelect;
-
-export interface InadimplenciaDto {
-  chargeId: string;
-  unidade: string;
-  pagador: string | null;
-  competencia: string;
-  vencimento: string;
-  valorCentavos: number;
-  valorAtualizadoCentavos: number;
-  diasAtraso: number;
-}
 
 @Injectable()
 export class ChargeService implements OnModuleInit {
@@ -93,6 +84,7 @@ export class ChargeService implements OnModuleInit {
         titulo: `Sua taxa de ${nomeDoMes(dto.competencia)}`,
         atrasada: aberta && atual.diasAtraso > 0,
         diasAtraso: aberta ? atual.diasAtraso : 0,
+        diasParaVencer: daysBetween(hoje, dto.vencimento),
         valorAtualizadoCentavos: aberta ? atual.totalCentavos : dto.valorCentavos,
       };
     });
@@ -120,6 +112,7 @@ export class ChargeService implements OnModuleInit {
       const u = units.get(r.unitId);
       return {
         chargeId: r.id,
+        unitId: r.unitId,
         unidade: u ? describeUnit(u) : r.unitId,
         pagador: r.pagadorPersonId ? (people.get(r.pagadorPersonId)?.nome ?? null) : null,
         competencia: r.competencia.slice(0, 7),

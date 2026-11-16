@@ -20,6 +20,7 @@ const charge = (over: Partial<MyChargeDto>): MyChargeDto => ({
   titulo: 'Sua taxa de outubro',
   atrasada: false,
   diasAtraso: 0,
+  diasParaVencer: 0,
   valorAtualizadoCentavos: 100,
   ...over,
 });

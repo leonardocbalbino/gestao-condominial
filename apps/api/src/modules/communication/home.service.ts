@@ -3,6 +3,7 @@ import { daysBetween, type MoradorHomeDto, type MyChargeDto } from '@condo/contr
 import { todayInBrazil } from '../../common/dates';
 import { ChargeService } from '../billing/charge.service';
 import { CondominioService } from '../org/condominio.service';
+import { PersonService } from '../org/person.service';
 import { describeUnit, UnitService } from '../org/unit.service';
 import { AnnouncementService } from './announcement.service';
 
@@ -32,6 +33,7 @@ export class HomeService {
     private readonly announcements: AnnouncementService,
     private readonly units: UnitService,
     private readonly condominios: CondominioService,
+    private readonly people: PersonService,
   ) {}
 
   async forUnit(condominioId: string, unitId: string): Promise<MoradorHomeDto> {
@@ -39,9 +41,11 @@ export class HomeService {
     const condominio = await this.condominios.get(condominioId);
     const charges = await this.charges.ofUnit(condominioId, unitId);
     const announcements = await this.announcements.listForCurrentUser(condominioId);
+    const nome = await this.people.nameOfCurrentUser();
     return {
       condominioNome: condominio.nome,
       unidade: describeUnit(unit),
+      primeiroNome: nome?.trim().split(/s+/)[0] ?? null,
       pendencia: pickPendencia(charges, todayInBrazil()),
       comunicadosNaoLidos: announcements.filter((a) => !a.lido),
       avisosDoDia: [],

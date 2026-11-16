@@ -11,6 +11,7 @@ import {
   type ChargeDto,
   type CreateBudgetRequest,
   type CreatePayableRequest,
+  type InadimplenciaDto,
   type MyChargeDto,
   type PayableDto,
   type PaymentAccountDto,
@@ -25,7 +26,7 @@ import { z } from 'zod';
 import { RequirePermission, Webhook } from '../../http/access';
 import { ZodPipe } from '../../http/zod.pipe';
 import { BudgetService } from './budget.service';
-import { ChargeService, type InadimplenciaDto } from './charge.service';
+import { ChargeService } from './charge.service';
 import { PayableService } from './payable.service';
 import { PaymentAccountService } from './payment-account.service';
 import { RateioService } from './rateio.service';

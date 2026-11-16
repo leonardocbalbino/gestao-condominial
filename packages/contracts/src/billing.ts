@@ -119,7 +119,22 @@ export interface MyChargeDto extends ChargeDto {
   titulo: string;
   atrasada: boolean;
   diasAtraso: number;
+  /** Dias até o vencimento (0 = vence hoje; negativo quando já venceu). */
+  diasParaVencer: number;
   valorAtualizadoCentavos: number;
+}
+
+/** Inadimplência nominal: só gestora, síndico e conselho (§3.9). */
+export interface InadimplenciaDto {
+  chargeId: string;
+  unitId: string;
+  unidade: string;
+  pagador: string | null;
+  competencia: string;
+  vencimento: string;
+  valorCentavos: number;
+  valorAtualizadoCentavos: number;
+  diasAtraso: number;
 }
 
 const MESES = [

@@ -28,6 +28,8 @@ export interface AnnouncementStatsDto extends AnnouncementDto {
 export interface MoradorHomeDto {
   condominioNome: string;
   unidade: string;
+  /** Para a saudação ("Olá, Lourdes"). Nulo se o login não tem cadastro de pessoa. */
+  primeiroNome: string | null;
   /** Boleto em atraso ou o próximo a vencer. Nunca pode ser ocultado. */
   pendencia: MyChargeDto | null;
   comunicadosNaoLidos: AnnouncementDto[];
