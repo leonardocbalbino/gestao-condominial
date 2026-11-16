@@ -12,6 +12,7 @@ import {
   createCondominio,
   createGestora,
   createUser,
+  randomCpf,
   uniqueEmail,
   waitForOutbox,
 } from './support/db';
@@ -160,6 +161,17 @@ describe('implantação do condomínio', () => {
   });
 
   it('primeira cobrança emitida completa a implantação', async () => {
+    // O rateio só emite com proprietário (com CPF) em cada unidade.
+    const units = await t.http().get(`${base()}/units`).set(auth(admin));
+    for (const u of units.body as { id: string; numero: string }[]) {
+      const owner = await t
+        .http()
+        .post(`${base()}/units/${u.id}/grants/owner`)
+        .set(auth(admin))
+        .send({ nome: `Proprietário ${u.numero}`, cpf: randomCpf(), email: uniqueEmail('dono') });
+      expect(owner.status).toBe(201);
+    }
+
     const accs = await t.http().get(`${base()}/ledger/accounts`).set(auth(admin));
     const conta = (accs.body as { codigo: string; id: string }[]).find(
       (x) => x.codigo === '4.3.04',

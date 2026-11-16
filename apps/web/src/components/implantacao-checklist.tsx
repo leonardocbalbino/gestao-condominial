@@ -40,7 +40,8 @@ const meta: Record<ImplantacaoPasso, { titulo: string; descricao: string; rotulo
   },
   cobranca: {
     titulo: 'Emitir a primeira cobrança',
-    descricao: 'Aprove o orçamento do ano e gere o rateio do mês.',
+    descricao:
+      'Cada unidade precisa de proprietário com CPF; depois, aprove o orçamento e gere o rateio.',
     rotulo: 'primeira cobrança',
   },
 };
