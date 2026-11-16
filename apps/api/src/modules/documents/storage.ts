@@ -1,4 +1,11 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  CreateBucketCommand,
+  GetObjectCommand,
+  HeadBucketCommand,
+  PutBucketVersioningCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import type { Env } from '../../config/env';
 
 /** Porta de armazenamento de arquivos. Produção/dev: S3 (MinIO); testes: em memória. */
@@ -33,6 +40,22 @@ export class S3Storage implements ObjectStorage {
         Body: body,
         ContentType: contentType,
       }),
+    );
+  }
+
+  /**
+   * Cria o bucket (se não existir) com versionamento ligado. Usado em dev e homologação
+   * (S3_ENSURE_BUCKET=true); em produção o bucket é provisionado fora da aplicação.
+   */
+  async ensureBucket(): Promise<void> {
+    const Bucket = this.env.S3_BUCKET;
+    const exists = await this.client.send(new HeadBucketCommand({ Bucket })).then(
+      () => true,
+      () => false,
+    );
+    if (!exists) await this.client.send(new CreateBucketCommand({ Bucket }));
+    await this.client.send(
+      new PutBucketVersioningCommand({ Bucket, VersioningConfiguration: { Status: 'Enabled' } }),
     );
   }
 
