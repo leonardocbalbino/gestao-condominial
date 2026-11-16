@@ -150,11 +150,14 @@ const control =
 function FieldShell({
   label,
   hint,
+  error,
   className = '',
   children,
 }: {
   label: string;
   hint?: string | undefined;
+  /** Erro de validação: fica dentro do label, então o leitor de tela o lê com o campo. */
+  error?: string | undefined;
   className?: string | undefined;
   children: ReactNode;
 }) {
@@ -162,7 +165,11 @@ function FieldShell({
     <label className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
       <span className="text-label font-semibold">{label}</span>
       {children}
-      {hint && <span className="text-caption text-text-muted">{hint}</span>}
+      {error ? (
+        <span className="text-caption font-medium text-danger">{error}</span>
+      ) : (
+        hint && <span className="text-caption text-text-muted">{hint}</span>
+      )}
     </label>
   );
 }
@@ -171,12 +178,22 @@ function FieldShell({
 export function Field({
   label,
   hint,
+  error,
   wrapperClassName,
   ...props
-}: ComponentProps<'input'> & { label: string; hint?: string; wrapperClassName?: string }) {
+}: ComponentProps<'input'> & {
+  label: string;
+  hint?: string;
+  error?: string | undefined;
+  wrapperClassName?: string;
+}) {
   return (
-    <FieldShell label={label} hint={hint} className={wrapperClassName}>
-      <input className={`h-11 ${control}`} {...props} />
+    <FieldShell label={label} hint={hint} error={error} className={wrapperClassName}>
+      <input
+        className={`h-11 ${control} ${error ? 'border-danger' : ''}`}
+        aria-invalid={error ? true : undefined}
+        {...props}
+      />
     </FieldShell>
   );
 }
@@ -244,7 +261,9 @@ const statusChips = {
   aberto: { label: 'Aberto', tone: 'neutral' },
   em_revisao: { label: 'Em revisão', tone: 'info' },
   com_ressalva: { label: 'Com ressalva', tone: 'warning' },
+  aprovada: { label: 'Aprovada', tone: 'info' },
   publicada: { label: 'Publicada', tone: 'success' },
+  em_implantacao: { label: 'Em implantação', tone: 'neutral' },
   sem_cobranca: { label: 'Sem cobrança', tone: 'neutral' },
 } as const satisfies Record<string, { label: string; tone: BadgeTone }>;
 
