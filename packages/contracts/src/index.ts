@@ -8,3 +8,4 @@ export * from './ledger';
 export * from './org';
 export * from './permissions';
 export * from './rbac';
+export * from './implantacao';
