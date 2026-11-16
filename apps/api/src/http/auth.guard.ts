@@ -36,7 +36,8 @@ export class AuthGuard implements CanActivate {
       );
       throw new ForbiddenException();
     }
-    if (rule.kind === 'public') return true;
+    // Webhook: sem usuário; a autenticidade é conferida pelo handler (token da subconta).
+    if (rule.kind === 'public' || rule.kind === 'webhook') return true;
 
     const request = context.switchToHttp().getRequest<Request>();
     const header = request.headers.authorization;

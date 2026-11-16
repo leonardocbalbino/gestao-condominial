@@ -124,6 +124,30 @@ export class UnitAccessService {
     return dto;
   }
 
+  /**
+   * Pagador de cada unidade: a pessoa com vínculo ativo que tem a permissão "pagamento"
+   * (Fase 1: o proprietário; na Fase 3, o inquilino quando o contrato disser).
+   */
+  async payersOf(condominioId: string): Promise<Map<string, string>> {
+    const { tx } = currentContext();
+    const rows = await tx
+      .select({ unitId: unitAccessGrant.unitId, personId: unitAccessGrant.personId })
+      .from(unitAccessGrant)
+      .where(
+        and(
+          eq(unitAccessGrant.condominioId, condominioId),
+          isNull(unitAccessGrant.revogadoEm),
+          sql`'pagamento' = ANY(${unitAccessGrant.permissoes})`,
+          sql`${unitAccessGrant.inicio} <= now()`,
+          sql`(${unitAccessGrant.fim} IS NULL OR ${unitAccessGrant.fim} > now())`,
+        ),
+      )
+      .orderBy(asc(unitAccessGrant.createdAt));
+    const payers = new Map<string, string>();
+    for (const r of rows) if (!payers.has(r.unitId)) payers.set(r.unitId, r.personId);
+    return payers;
+  }
+
   /** Encerra o vínculo e o papel de morador ligado a ele (efeito imediato no can()). */
   async revoke(condominioId: string, unitId: string, grantId: string): Promise<void> {
     const { tx } = currentContext();

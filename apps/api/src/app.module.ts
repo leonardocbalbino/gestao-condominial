@@ -9,7 +9,9 @@ import { DatabaseModule } from './db/database.module';
 import { AuthGuard } from './http/auth.guard';
 import { RequestPipelineInterceptor } from './http/request-pipeline.interceptor';
 import { AuditModule } from './modules/audit/audit.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { OutboxModule } from './outbox/outbox.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { LedgerModule } from './modules/ledger/ledger.module';
 import { OrgModule } from './modules/org/org.module';
@@ -54,11 +56,13 @@ const REQUEST_ID = /^[\w-]{8,64}$/;
       useFactory: (env: Env) => [{ ttl: 60_000, limit: env.AUTH_RATE_LIMIT_PER_MINUTE }],
     }),
     DatabaseModule,
+    OutboxModule,
     AuditModule,
     OrgModule,
     IdentityModule,
     DocumentsModule,
     LedgerModule,
+    BillingModule,
     PlatformModule,
   ],
   providers: [

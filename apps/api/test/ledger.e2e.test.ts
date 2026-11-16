@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { todayInBrazil } from '../src/modules/ledger/journal.service';
+import { todayInBrazil } from '../src/common/dates';
 import { createTestApp, login, type TestApp } from './support/app';
 import {
   assignRole,

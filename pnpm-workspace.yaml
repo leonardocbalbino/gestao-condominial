@@ -2,8 +2,10 @@ packages:
   - apps/*
   - packages/*
 
-# Scripts de instalação: só os necessários. Os binários de swc/esbuild vêm por pacotes opcionais.
+# Scripts de instalação: só os necessários. Os binários de swc/esbuild vêm por pacotes
+# opcionais; msgpackr-extract (BullMQ) é acelerador opcional com fallback em JS.
 allowBuilds:
   '@swc/core': false
   esbuild: false
+  msgpackr-extract: false
   protobufjs: false

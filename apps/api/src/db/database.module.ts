@@ -7,7 +7,10 @@ import { schema } from './schema';
 
 /** Conexão como app_user (sujeita a RLS). Usada por toda a API. */
 export const APP_DB = Symbol('APP_DB');
-/** Conexão como app_platform. Usada apenas pelo caminho /platform. */
+/**
+ * Conexão como app_platform: caminho /platform e processos de sistema sem tenant (relay do
+ * outbox, agendador), cada um limitado por políticas e grants de coluna próprios.
+ */
 export const PLATFORM_DB = Symbol('PLATFORM_DB');
 const POOLS = Symbol('POOLS');
 

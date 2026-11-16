@@ -91,6 +91,22 @@ export class PersonService {
     return { person: await this.insert(input, userId), created: true };
   }
 
+  /**
+   * Dados do pagador para o broker (CPF sem máscara). Uso interno do sistema na emissão
+   * da cobrança; nunca exposto pela API.
+   */
+  async billingData(
+    ids: string[],
+  ): Promise<Map<string, { nome: string; cpf: string | null; email: string | null }>> {
+    if (ids.length === 0) return new Map();
+    const { tx } = currentContext();
+    const rows = await tx
+      .select({ id: person.id, nome: person.nome, cpf: person.cpf, email: person.email })
+      .from(person)
+      .where(inArray(person.id, ids));
+    return new Map(rows.map((r) => [r.id, { nome: r.nome, cpf: r.cpf, email: r.email }]));
+  }
+
   async get(id: string): Promise<PersonDto> {
     const { tx } = currentContext();
     const [row] = await tx.select().from(person).where(eq(person.id, id));

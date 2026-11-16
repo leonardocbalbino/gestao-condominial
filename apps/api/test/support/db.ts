@@ -70,6 +70,38 @@ export function randomCnpj(): string {
   return [...base, d1, d2].join('');
 }
 
+/** CPF válido aleatório (dígitos verificadores calculados). Fictício. */
+export function randomCpf(): string {
+  const base = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  const digit = (digits: number[]) => {
+    const factor = digits.length + 1;
+    const rest = digits.reduce((acc, d, i) => acc + d * (factor - i), 0) % 11;
+    return rest < 2 ? 0 : 11 - rest;
+  };
+  const d1 = digit(base);
+  const d2 = digit([...base, d1]);
+  return [...base, d1, d2].join('');
+}
+
+/**
+ * Espera o outbox da gestora esvaziar (eventos publicados e processados pelos workers).
+ * Falha com o último erro se algum evento não for processado a tempo.
+ */
+export async function waitForOutbox(gestoraId: string, timeoutMs = 20_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const { rows } = await testPools().admin.query<{ topic: string; last_error: string | null }>(
+      'SELECT topic, last_error FROM outbox_event WHERE gestora_id = $1 AND processed_at IS NULL',
+      [gestoraId],
+    );
+    if (rows.length === 0) return;
+    if (Date.now() > deadline) {
+      throw new Error(`Outbox não esvaziou: ${JSON.stringify(rows)}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
 export const uniqueEmail = (prefix: string): string =>
   `${prefix}-${randomUUID().slice(0, 8)}@teste.local`;
 

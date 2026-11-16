@@ -24,6 +24,19 @@ services:
     ports:
       - '127.0.0.1:${MAILPIT_UI_PORT:-8716}:8025'
 
+  # Filas (BullMQ). Sem porta no host; AOF ligado para não perder jobs num reinício.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   # Comprovantes. Sem porta no host; o bucket nasce com versionamento (minio-init).
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
@@ -57,14 +70,14 @@ services:
 
   # Papéis de banco + migrações. Único serviço com a credencial de superusuário.
   migrate:
-    build: &api-build
+    build:
       context: ../..
       dockerfile: apps/api/Dockerfile
     image: condo-api:latest
     depends_on:
       postgres:
         condition: service_healthy
-    environment: &db-urls
+    environment:
       DATABASE_ADMIN_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
       DATABASE_OWNER_URL: postgres://app_owner:${DB_OWNER_PASSWORD:?}@postgres:5432/condo
       DATABASE_URL: postgres://app_user:${DB_APP_PASSWORD:?}@postgres:5432/condo
@@ -82,8 +95,17 @@ services:
         condition: service_started
       minio-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     environment:
+      DEPLOY_ENV: homolog
       PORT: 3333
+      REDIS_URL: redis://redis:6379
+      APP_API_URL: ${APP_API_URL:?}
+      # Homologação usa o broker simulado; para o sandbox do Asaas, troque e informe a chave.
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-fake}
+      ASAAS_ROOT_API_KEY: ${ASAAS_ROOT_API_KEY:-}
+      PLATFORM_FEE_CENTAVOS: ${PLATFORM_FEE_CENTAVOS:-0}
       LOG_LEVEL: info
       TRUST_PROXY: 'false'
       DATABASE_URL: postgres://app_user:${DB_APP_PASSWORD}@postgres:5432/condo
@@ -102,3 +124,4 @@ services:
 volumes:
   pgdata:
   miniodata:
+  redisdata:

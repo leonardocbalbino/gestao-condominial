@@ -1,5 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import type { CondominioDto, CreateCondominioRequest } from '@condo/contracts';
+import {
+  condominioConfigSchema,
+  resolveCondominioConfig,
+  type CondominioConfig,
+  type CondominioDto,
+  type CreateCondominioRequest,
+  type Endereco,
+  type UpdateCondominioConfigRequest,
+} from '@condo/contracts';
 import { asc, eq, sql } from 'drizzle-orm';
 import { isUniqueViolation } from '../../db/errors';
 import { currentContext } from '../../db/request-context';
@@ -63,6 +71,47 @@ export class CondominioService {
     const [row] = await tx.select().from(condominio).where(eq(condominio.id, id));
     if (!row) throw new NotFoundException('Condomínio não encontrado');
     return toDto(row);
+  }
+
+  /** Configuração completa (convenção), com padrões nos campos não gravados. */
+  async getConfig(id: string): Promise<CondominioConfig> {
+    return resolveCondominioConfig((await this.row(id)).config);
+  }
+
+  async updateConfig(id: string, patch: UpdateCondominioConfigRequest): Promise<CondominioConfig> {
+    const before = await this.getConfig(id);
+    const after = condominioConfigSchema.parse({
+      cobranca: { ...before.cobranca, ...patch.cobranca },
+      pagamentos: { ...before.pagamentos, ...patch.pagamentos },
+    });
+    const { tx } = currentContext();
+    await tx.update(condominio).set({ config: after }).where(eq(condominio.id, id));
+    await this.audit.record({
+      action: 'condominio.config_updated',
+      resourceType: 'condominio',
+      resourceId: id,
+      before,
+      after,
+    });
+    return after;
+  }
+
+  /** Dados cadastrais usados para abrir a subconta no broker. Quem chama audita. */
+  async billingProfile(id: string): Promise<{ nome: string; cnpj: string }> {
+    const row = await this.row(id);
+    return { nome: row.nome, cnpj: row.cnpj };
+  }
+
+  async setEndereco(id: string, endereco: Endereco): Promise<void> {
+    const { tx } = currentContext();
+    await tx.update(condominio).set({ endereco }).where(eq(condominio.id, id));
+  }
+
+  private async row(id: string): Promise<typeof condominio.$inferSelect> {
+    const { tx } = currentContext();
+    const [row] = await tx.select().from(condominio).where(eq(condominio.id, id));
+    if (!row) throw new NotFoundException('Condomínio não encontrado');
+    return row;
   }
 
   /** RLS: condomínio de outra gestora simplesmente não existe aqui. */

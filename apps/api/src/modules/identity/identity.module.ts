@@ -55,11 +55,13 @@ import { UsersService } from './users.service';
     },
   ],
   exports: [
+    SECRET_BOX,
     AuthorizationService,
     MagicLinkService,
     PasswordService,
     RolesService,
     TokenService,
+    UnitAccessService,
     UsersService,
   ],
 })

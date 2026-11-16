@@ -38,11 +38,13 @@ const GESTORAS = [
 
 async function main(): Promise<void> {
   loadDotEnvFile();
+  // Script de uma execução: sem relay do outbox nem workers neste processo.
+  process.env.WORKERS_ENABLED = 'false';
   const password = process.env.SEED_DEV_PASSWORD;
   if (!password) throw new Error('Defina SEED_DEV_PASSWORD no .env');
 
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] });
-  if (app.get<Env>(ENV).NODE_ENV === 'production')
+  if (app.get<Env>(ENV).DEPLOY_ENV === 'production')
     throw new Error('Seed de demonstração não roda em produção');
 
   const platformDb = app.get<Database>(PLATFORM_DB);

@@ -6,9 +6,11 @@ import {
 } from '@nestjs/common';
 import type { PeriodDto } from '@condo/contracts';
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm';
+import { firstDayOf, nextMonth } from '../../common/dates';
 import { currentContext } from '../../db/request-context';
 import { accountingPeriod } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
+import { ClosingGuards } from './closing-guards';
 
 type PeriodRow = typeof accountingPeriod.$inferSelect;
 
@@ -20,20 +22,15 @@ export const toPeriodDto = (row: PeriodRow): PeriodDto => ({
   fechadoEm: row.fechadoEm?.toISOString() ?? null,
 });
 
-/** '2026-10' ou '2026-10-15' → '2026-10-01'. */
-export const firstDayOf = (value: string): string => `${value.slice(0, 7)}-01`;
-
-const nextMonth = (mes: string): string => {
-  const [y, m] = mes.split('-').map(Number) as [number, number];
-  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
-};
-
 /** Teto de meses criados de uma vez ao lançar no futuro (evita erro de digitação de ano). */
 const MAX_MONTHS_AHEAD = 13;
 
 @Injectable()
 export class PeriodService {
-  constructor(private readonly audit: AuditService) {}
+  constructor(
+    private readonly audit: AuditService,
+    private readonly guards: ClosingGuards,
+  ) {}
 
   async list(condominioId: string): Promise<PeriodDto[]> {
     const { tx } = currentContext();
@@ -153,6 +150,13 @@ export class PeriodService {
       .limit(1);
     if (previousOpen) {
       throw new ConflictException(`Feche antes o mês ${previousOpen.mes.slice(0, 7)}`);
+    }
+    const blockers = await this.guards.check(condominioId, period.mes);
+    if (blockers.length > 0) {
+      throw new ConflictException({
+        message: 'O mês ainda não pode ser fechado',
+        motivos: blockers,
+      });
     }
 
     const [closed] = await tx

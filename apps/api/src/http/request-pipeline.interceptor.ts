@@ -50,7 +50,12 @@ export class RequestPipelineInterceptor implements NestInterceptor {
       context.getClass(),
     ]);
     const request = context.switchToHttp().getRequest<Request>();
-    const gestoraId = rule.kind === 'permission' ? this.gestoraFromHeader(request) : null;
+    const gestoraId =
+      rule.kind === 'permission'
+        ? this.gestoraFromHeader(request)
+        : rule.kind === 'webhook'
+          ? this.uuidParam(request, rule.gestoraParam)
+          : null;
     const db = rule.kind === 'platform' ? this.platformDb : this.appDb;
 
     const run = async () => {

@@ -13,7 +13,16 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "env": ["DATABASE_*", "APP_*", "JWT_*", "SMTP_*"]
+      "env": [
+        "DATABASE_*",
+        "APP_*",
+        "JWT_*",
+        "SMTP_*",
+        "REDIS_*",
+        "S3_*",
+        "PAYMENT_*",
+        "PLATFORM_*"
+      ]
     }
   }
 }

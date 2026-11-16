@@ -18,6 +18,9 @@ const defaults: Record<string, string> = {
   SMTP_URL: 'smtp://localhost:1025',
   APP_WEB_URL: 'http://localhost:3000',
   AUTH_RATE_LIMIT_PER_MINUTE: '1000',
+  REDIS_URL: 'redis://localhost:6379',
+  PAYMENT_PROVIDER: 'fake',
+  PLATFORM_FEE_CENTAVOS: '150',
   // Os testes trocam o storage por um em memória; estes valores só passam na validação.
   S3_ENDPOINT: 'http://localhost:9000',
   S3_BUCKET: 'condo-attachments',

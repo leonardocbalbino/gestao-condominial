@@ -87,6 +87,7 @@ export const condominio = pgTable('condominio', {
   nome: text('nome').notNull(),
   cnpj: varchar('cnpj', { length: 14 }).notNull(),
   config: jsonb('config').$type<Record<string, unknown>>().notNull().default({}),
+  endereco: jsonb('endereco').$type<Record<string, unknown>>(),
   path: ltree('path').generatedAlwaysAs(
     sql`text2ltree(app_scope_label('g', gestora_id) || '.' || app_scope_label('c', id))`,
   ),
@@ -311,6 +312,170 @@ export const journalLine = pgTable('journal_line', {
   valorCentavos: money('valor_centavos').notNull(),
 });
 
+// ---------------------------------------------------------------------------
+// 0004 — cobrança
+// ---------------------------------------------------------------------------
+
+export const outboxEvent = pgTable('outbox_event', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id'),
+  topic: text('topic').notNull(),
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+  createdAt: createdAt(),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error'),
+});
+
+export const paymentAccount = pgTable('payment_account', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  provider: text('provider', { enum: ['fake', 'asaas'] }).notNull(),
+  providerAccountId: text('provider_account_id').notNull(),
+  walletId: text('wallet_id'),
+  apiKeyEnc: text('api_key_enc').notNull(),
+  webhookTokenEnc: text('webhook_token_enc').notNull(),
+  extratoAte: date('extrato_ate', { mode: 'string' }),
+  createdAt: createdAt(),
+});
+
+export const budget = pgTable('budget', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  ano: integer('ano').notNull(),
+  status: text('status', { enum: ['rascunho', 'aprovado'] })
+    .notNull()
+    .default('rascunho'),
+  aprovadoEm: timestamp('aprovado_em', { withTimezone: true }),
+  aprovadoPor: uuid('aprovado_por'),
+  createdAt: createdAt(),
+});
+
+export const budgetLine = pgTable('budget_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  budgetId: uuid('budget_id').notNull(),
+  accountId: uuid('account_id').notNull(),
+  valorMensalCentavos: money('valor_mensal_centavos').notNull(),
+  criterio: text('criterio', { enum: ['fracao_ideal', 'igualitario'] }).notNull(),
+});
+
+export const CHARGE_STATUS = [
+  'pendente_emissao',
+  'emitida',
+  'erro_emissao',
+  'paga',
+  'cancelada',
+] as const;
+
+export const charge = pgTable('charge', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  unitId: uuid('unit_id').notNull(),
+  competencia: date('competencia', { mode: 'string' }).notNull(),
+  tipo: text('tipo', { enum: ['ordinaria', 'extra'] })
+    .notNull()
+    .default('ordinaria'),
+  vencimento: date('vencimento', { mode: 'string' }).notNull(),
+  valorCentavos: money('valor_centavos').notNull(),
+  multaBp: integer('multa_bp').notNull(),
+  jurosMensalBp: integer('juros_mensal_bp').notNull(),
+  status: text('status', { enum: CHARGE_STATUS }).notNull().default('pendente_emissao'),
+  pagadorPersonId: uuid('pagador_person_id'),
+  providerChargeId: text('provider_charge_id'),
+  linhaDigitavel: text('linha_digitavel'),
+  pixCopiaCola: text('pix_copia_cola'),
+  boletoUrl: text('boleto_url'),
+  erroEmissao: text('erro_emissao'),
+  pagoEm: date('pago_em', { mode: 'string' }),
+  valorPagoCentavos: money('valor_pago_centavos'),
+  createdBy: uuid('created_by'),
+  createdAt: createdAt(),
+});
+
+export const chargeItem = pgTable('charge_item', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  chargeId: uuid('charge_id').notNull(),
+  accountId: uuid('account_id').notNull(),
+  descricao: text('descricao').notNull(),
+  valorCentavos: money('valor_centavos').notNull(),
+});
+
+export const paymentEvent = pgTable('payment_event', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  provider: text('provider').notNull(),
+  eventId: text('event_id').notNull(),
+  tipo: text('tipo').notNull(),
+  payload: jsonb('payload').notNull(),
+  recebidoEm: timestamp('recebido_em', { withTimezone: true }).notNull().defaultNow(),
+  processadoEm: timestamp('processado_em', { withTimezone: true }),
+  resultado: text('resultado'),
+});
+
+export const PAYABLE_STATUS = [
+  'aguardando_aprovacao',
+  'aguardando_segunda_aprovacao',
+  'aprovada',
+  'pagamento_solicitado',
+  'paga',
+  'rejeitada',
+] as const;
+
+export const payable = pgTable('payable', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  fornecedor: text('fornecedor').notNull(),
+  fornecedorDocumento: varchar('fornecedor_documento', { length: 14 }),
+  descricao: text('descricao').notNull(),
+  accountId: uuid('account_id').notNull(),
+  valorCentavos: money('valor_centavos').notNull(),
+  vencimento: date('vencimento', { mode: 'string' }).notNull(),
+  linhaDigitavel: text('linha_digitavel'),
+  comprovanteId: uuid('comprovante_id').notNull(),
+  requerSegundaAprovacao: boolean('requer_segunda_aprovacao').notNull(),
+  status: text('status', { enum: PAYABLE_STATUS }).notNull().default('aguardando_aprovacao'),
+  aprovadoPor: uuid('aprovado_por'),
+  aprovadoEm: timestamp('aprovado_em', { withTimezone: true }),
+  segundaAprovacaoPor: uuid('segunda_aprovacao_por'),
+  segundaAprovacaoEm: timestamp('segunda_aprovacao_em', { withTimezone: true }),
+  rejeitadoPor: uuid('rejeitado_por'),
+  motivoRejeicao: text('motivo_rejeicao'),
+  providerPaymentId: text('provider_payment_id'),
+  pagoEm: date('pago_em', { mode: 'string' }),
+  createdBy: uuid('created_by'),
+  createdAt: createdAt(),
+});
+
+export const bankStatementLine = pgTable('bank_statement_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  gestoraId: uuid('gestora_id').notNull(),
+  condominioId: uuid('condominio_id').notNull(),
+  providerTxId: text('provider_tx_id').notNull(),
+  data: date('data', { mode: 'string' }).notNull(),
+  valorCentavos: money('valor_centavos').notNull(),
+  descricao: text('descricao').notNull(),
+  refTipo: text('ref_tipo', { enum: ['charge', 'bill'] }),
+  refId: text('ref_id'),
+  status: text('status', { enum: ['conciliada', 'excecao', 'resolvida'] }).notNull(),
+  matchEntryId: uuid('match_entry_id'),
+  motivo: text('motivo'),
+  resolvidoPor: uuid('resolvido_por'),
+  resolvidoEm: timestamp('resolvido_em', { withTimezone: true }),
+  notaResolucao: text('nota_resolucao'),
+  createdAt: createdAt(),
+});
+
 export const schema = {
   gestora,
   appUser,
@@ -332,4 +497,13 @@ export const schema = {
   accountingPeriod,
   journalEntry,
   journalLine,
+  outboxEvent,
+  paymentAccount,
+  budget,
+  budgetLine,
+  charge,
+  chargeItem,
+  paymentEvent,
+  payable,
+  bankStatementLine,
 };

@@ -12,7 +12,8 @@ import { AuditService } from '../audit/audit.service';
 import { CondominioService } from '../org/condominio.service';
 import { AccountService } from './account.service';
 import { JournalService } from './journal.service';
-import { firstDayOf, PeriodService, toPeriodDto } from './period.service';
+import { firstDayOf } from '../../common/dates';
+import { PeriodService, toPeriodDto } from './period.service';
 
 // `type` (não interface) para satisfazer Record<string, unknown> exigido pelo execute().
 type BalanceteRow = {
@@ -108,10 +109,11 @@ export class LedgerService {
 
     // Receitas são créditos (saldo negativo); despesas, débitos. Totais do mês em valor absoluto.
     const movement = (l: BalanceteLinha) => l.debitosCentavos - l.creditosCentavos;
-    const receitas = -sum(linhas.filter((l) => l.natureza === 'receita').map(movement));
+    // `0 - x` em vez de `-x`: sem soma, -0 viraria um valor diferente de 0 em comparações.
+    const receitas = 0 - sum(linhas.filter((l) => l.natureza === 'receita').map(movement));
     const despesas = sum(linhas.filter((l) => l.natureza === 'despesa').map(movement));
     const fundo = (grupo: AccountGrupo) =>
-      -sum(linhas.filter((l) => l.grupo === grupo).map((l) => l.saldoFinalCentavos));
+      0 - sum(linhas.filter((l) => l.grupo === grupo).map((l) => l.saldoFinalCentavos));
 
     return {
       period: toPeriodDto(period),

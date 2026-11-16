@@ -5,7 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { CreateEntryRequest, JournalEntryDto, JournalLineDto } from '@condo/contracts';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { todayInBrazil } from '../../common/dates';
 import { isUniqueViolation } from '../../db/errors';
 import { currentContext } from '../../db/request-context';
 import { account, ENTRY_ORIGENS, journalEntry, journalLine } from '../../db/schema';
@@ -22,10 +23,6 @@ export interface PostEntryInput extends CreateEntryRequest {
   /** Id do objeto de origem (cobrança, pagamento…). Repetir o mesmo par não duplica. */
   origemRef?: string;
 }
-
-/** Data de hoje no fuso do Brasil (datas de caixa são de calendário local). */
-export const todayInBrazil = (): string =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 
 /**
  * Razão de partidas dobradas. Só insere: correção é estorno (regra §3.3). O banco garante
@@ -130,6 +127,47 @@ export class JournalService {
       after: dto,
     });
     return dto;
+  }
+
+  /**
+   * Lançamentos automáticos pela origem (ex.: recebimento de cobrança `pay_123`), com o
+   * movimento na conta banco. Usado pela conciliação. Estornados ficam de fora.
+   */
+  async bankMovementsByOrigin(
+    condominioId: string,
+    origem: EntryOrigem,
+    refs: string[],
+  ): Promise<Map<string, { entryId: string; bancoCentavos: number }>> {
+    if (refs.length === 0) return new Map();
+    const banco = await this.accounts.byPapel(condominioId, 'banco');
+    const { tx } = currentContext();
+    const rows = await tx
+      .select({
+        entryId: journalEntry.id,
+        ref: journalEntry.origemRef,
+        valor: journalLine.valorCentavos,
+      })
+      .from(journalEntry)
+      .innerJoin(journalLine, eq(journalLine.entryId, journalEntry.id))
+      .where(
+        and(
+          eq(journalEntry.condominioId, condominioId),
+          eq(journalEntry.origem, origem),
+          inArray(journalEntry.origemRef, refs),
+          eq(journalLine.accountId, banco.id),
+          sql`NOT EXISTS (SELECT 1 FROM journal_entry r WHERE r.estorno_de = ${journalEntry.id})`,
+        ),
+      );
+    const result = new Map<string, { entryId: string; bancoCentavos: number }>();
+    for (const r of rows) {
+      if (!r.ref) continue;
+      const current = result.get(r.ref);
+      result.set(r.ref, {
+        entryId: r.entryId,
+        bancoCentavos: (current?.bancoCentavos ?? 0) + r.valor,
+      });
+    }
+    return result;
   }
 
   async get(condominioId: string, entryId: string): Promise<JournalEntryDto> {

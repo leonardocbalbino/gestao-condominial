@@ -22,9 +22,17 @@ export type AccessRule =
   | { kind: 'public' }
   | { kind: 'authenticated' }
   | { kind: 'permission'; permission: PermissionKey; scope: PermissionScope }
-  | { kind: 'platform' };
+  | { kind: 'platform' }
+  | { kind: 'webhook'; gestoraParam: string };
 
 export const ACCESS_RULE = 'access_rule';
+
+/**
+ * Webhook do broker: sem login. A gestora vem do parâmetro de rota e vira o contexto RLS;
+ * o handler TEM de conferir a autenticidade (token da subconta) antes de gravar qualquer coisa.
+ */
+export const Webhook = (gestoraParam = 'gestoraId') =>
+  SetMetadata(ACCESS_RULE, { kind: 'webhook', gestoraParam } satisfies AccessRule);
 
 export const Public = () => SetMetadata(ACCESS_RULE, { kind: 'public' } satisfies AccessRule);
 
