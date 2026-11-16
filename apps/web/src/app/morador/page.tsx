@@ -86,7 +86,7 @@ export default async function MoradorHome({
           <h2 className="mt-2 text-xl font-bold leading-snug">{a.titulo}</h2>
           <p className="mt-2 whitespace-pre-line text-text-muted">{a.corpo}</p>
           <ActionForm action={markReadAction.bind(null, unit.unitId, a.id)} className="mt-4">
-            <SubmitButton variant="secondary" className="w-full">
+            <SubmitButton variant="secondary" fullWidth>
               <CheckCheck aria-hidden /> Li e entendi
             </SubmitButton>
           </ActionForm>

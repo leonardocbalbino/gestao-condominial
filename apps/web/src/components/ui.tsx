@@ -1,43 +1,90 @@
+import { Inbox, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 
 /**
- * Componentes básicos. Regras de acessibilidade do §7: alvo ≥ 48px, sempre ícone + texto,
- * contraste do tema (AA), foco visível (globals.css).
+ * Componentes básicos (ADR-0009). Os tamanhos são em rem: no painel (raiz de 16px) o
+ * botão médio tem 44px e o pequeno 36px; no morador (raiz de 18px) os mesmos componentes
+ * ficam com ≥ 48px, como pede o §7. Sempre ícone + texto, contraste AA e foco só por
+ * teclado (globals.css).
  */
 
 const variants = {
-  primary: 'bg-primary text-on-primary hover:opacity-90',
-  secondary: 'bg-surface text-text border-2 border-border hover:border-primary hover:text-primary',
+  primary: 'bg-primary text-on-primary hover:bg-primary-hover',
+  secondary: 'border border-border bg-surface text-text hover:bg-background',
+  ghost: 'bg-transparent text-primary hover:bg-primary-soft hover:text-on-primary-soft',
   danger: 'bg-danger text-on-danger hover:opacity-90',
+  /** Pagar em atraso (morador). */
   attention: 'bg-attention text-on-attention hover:opacity-90',
 } as const;
 
-type Variant = keyof typeof variants;
+const sizes = {
+  sm: 'min-h-9 px-3 text-label gap-1.5',
+  md: 'min-h-11 px-4 gap-2',
+} as const;
 
-const buttonClass = (variant: Variant, extra = '') =>
-  `touch inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] px-5 py-3 font-bold ${variants[variant]} disabled:opacity-60 ${extra}`;
+export type ButtonVariant = keyof typeof variants;
+export type ButtonSize = keyof typeof sizes;
+
+export interface ButtonStyle {
+  variant?: ButtonVariant | undefined;
+  size?: ButtonSize | undefined;
+  /** Largura total: só quando pedido (ex.: ação principal no celular). */
+  fullWidth?: boolean | undefined;
+}
+
+/**
+ * Classes do botão, para quando o elemento não é `Button`/`ButtonLink` (link externo,
+ * botão de formulário com estado). Regra: no máximo um `primary` por tela ou cartão.
+ */
+export function buttonClass({
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
+}: ButtonStyle = {}) {
+  return [
+    'touch inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-(--radius-control) font-semibold transition-colors',
+    'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+    variants[variant],
+    sizes[size],
+    // w-fit vence o "stretch" de colunas flex: o botão fica do tamanho do conteúdo.
+    fullWidth ? 'w-full' : 'w-fit',
+  ].join(' ');
+}
 
 export function Button({
-  variant = 'primary',
+  variant,
+  size,
+  fullWidth,
   className = '',
+  type = 'button',
   ...props
-}: ComponentProps<'button'> & { variant?: Variant }) {
-  return <button className={buttonClass(variant, className)} {...props} />;
+}: ComponentProps<'button'> & ButtonStyle) {
+  return (
+    <button
+      type={type}
+      className={`${buttonClass({ variant, size, fullWidth })} ${className}`}
+      {...props}
+    />
+  );
 }
 
 export function ButtonLink({
-  variant = 'primary',
+  variant,
+  size,
+  fullWidth,
   className = '',
   ...props
-}: ComponentProps<typeof Link> & { variant?: Variant }) {
-  return <Link className={buttonClass(variant, className)} {...props} />;
+}: ComponentProps<typeof Link> & ButtonStyle) {
+  return (
+    <Link className={`${buttonClass({ variant, size, fullWidth })} ${className}`} {...props} />
+  );
 }
 
 const cardTones = {
-  neutral: 'bg-surface border border-divider',
+  neutral: 'bg-surface border border-divider shadow-card',
   /** Ação esperada da pessoa (taxa a vencer): borda da cor principal. */
-  primary: 'bg-surface border-2 border-primary',
+  primary: 'bg-surface border-2 border-primary shadow-card',
   /** Atraso: laranja sobre fundo suave, mais forte que o neutro sem assustar. */
   attention: 'bg-attention-surface border-2 border-attention',
   danger: 'bg-surface border-4 border-danger',
@@ -45,18 +92,34 @@ const cardTones = {
   success: 'bg-success-surface border border-success',
 } as const;
 
+/**
+ * Cartão: fundo branco, borda 1px, raio 12px no painel, sombra leve, padding 24px.
+ * `title`/`actions` montam o cabeçalho padrão (título 18/600 + ações à direita).
+ */
 export function Card({
   children,
   className = '',
   tone = 'neutral',
+  title,
+  actions,
 }: {
   children: ReactNode;
   className?: string;
   /** Destaque visual (ex.: pendência em atraso). */
   tone?: keyof typeof cardTones;
+  title?: ReactNode;
+  actions?: ReactNode;
 }) {
   return (
-    <section className={`rounded-2xl p-5 ${cardTones[tone]} ${className}`}>{children}</section>
+    <section className={`min-w-0 rounded-(--radius-card) p-6 ${cardTones[tone]} ${className}`}>
+      {(title || actions) && (
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          {title && <h2 className="text-card font-semibold">{title}</h2>}
+          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        </header>
+      )}
+      {children}
+    </section>
   );
 }
 
@@ -72,90 +135,155 @@ export function PageHeader({
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-3xl font-bold">{title}</h1>
+        <h1 className="text-page font-bold tracking-tight">{title}</h1>
         {subtitle && <p className="mt-1 text-text-muted">{subtitle}</p>}
       </div>
-      {action}
+      {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
     </header>
   );
 }
 
+/** Campo: label 14/600 acima; borda de controle ≥ 3:1 (WCAG 1.4.11), não a do cartão. */
+const control =
+  'w-full rounded-(--radius-control) border border-border bg-surface px-3 text-body text-text placeholder:text-text-muted focus:border-primary disabled:cursor-not-allowed disabled:bg-background';
+
+function FieldShell({
+  label,
+  hint,
+  className = '',
+  children,
+}: {
+  label: string;
+  hint?: string | undefined;
+  className?: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <label className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
+      <span className="text-label font-semibold">{label}</span>
+      {children}
+      {hint && <span className="text-caption text-text-muted">{hint}</span>}
+    </label>
+  );
+}
+
+/** A largura vem do grid do formulário (o campo ocupa a coluna, nunca a página). */
 export function Field({
   label,
   hint,
+  wrapperClassName,
   ...props
-}: ComponentProps<'input'> & { label: string; hint?: string }) {
+}: ComponentProps<'input'> & { label: string; hint?: string; wrapperClassName?: string }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-semibold">{label}</span>
-      <input
-        className="min-h-13 rounded-xl border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
-        {...props}
-      />
-      {hint && <span className="text-sm text-text-muted">{hint}</span>}
-    </label>
+    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+      <input className={`h-11 ${control}`} {...props} />
+    </FieldShell>
   );
 }
 
 export function SelectField({
   label,
+  hint,
+  wrapperClassName,
   children,
   ...props
-}: ComponentProps<'select'> & { label: string }) {
+}: ComponentProps<'select'> & { label: string; hint?: string; wrapperClassName?: string }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-semibold">{label}</span>
-      <select
-        className="min-h-13 rounded-xl border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
-        {...props}
-      >
+    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+      <select className={`h-11 ${control}`} {...props}>
         {children}
       </select>
-    </label>
+    </FieldShell>
   );
 }
 
-export function TextArea({ label, ...props }: ComponentProps<'textarea'> & { label: string }) {
+export function TextArea({
+  label,
+  hint,
+  wrapperClassName,
+  ...props
+}: ComponentProps<'textarea'> & { label: string; hint?: string; wrapperClassName?: string }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-semibold">{label}</span>
-      <textarea
-        className="min-h-32 rounded-xl border-2 border-border bg-surface px-3 py-2 text-text focus:border-primary"
-        {...props}
-      />
-    </label>
+    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+      <textarea className={`min-h-28 py-2 ${control}`} {...props} />
+    </FieldShell>
   );
 }
 
 const badgeTones = {
   neutral: 'bg-background text-text border-divider',
-  info: 'bg-primary-soft text-on-primary-soft border-primary-soft',
+  info: 'bg-primary-soft text-info border-primary-soft',
   success: 'bg-success-surface text-on-success-surface border-success-surface',
   warning: 'bg-attention-surface text-on-attention-surface border-attention-surface',
   danger: 'bg-surface text-danger border-danger',
 } as const;
 
+export type BadgeTone = keyof typeof badgeTones;
+
 export function Badge({
   children,
   tone = 'neutral',
+  title,
 }: {
   children: ReactNode;
-  tone?: keyof typeof badgeTones;
+  tone?: BadgeTone;
+  /** Explica o chip ao passar o mouse (ex.: por que está "Em implantação"). */
+  title?: string;
 }) {
   return (
     <span
-      className={`inline-block rounded-full border px-3 py-0.5 text-sm font-bold ${badgeTones[tone]}`}
+      title={title}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-caption font-semibold ${badgeTones[tone]}`}
     >
       {children}
     </span>
   );
 }
 
-export function EmptyState({ children }: { children: ReactNode }) {
+const statusChips = {
+  aberto: { label: 'Aberto', tone: 'neutral' },
+  em_revisao: { label: 'Em revisão', tone: 'info' },
+  com_ressalva: { label: 'Com ressalva', tone: 'warning' },
+  publicada: { label: 'Publicada', tone: 'success' },
+  sem_cobranca: { label: 'Sem cobrança', tone: 'neutral' },
+} as const satisfies Record<string, { label: string; tone: BadgeTone }>;
+
+export type ChipStatus = keyof typeof statusChips;
+
+/** Chip de status padronizado: mesmo texto e cor em todas as telas. */
+export function StatusChip({ status, title }: { status: ChipStatus; title?: string }) {
+  const { label, tone } = statusChips[status];
   return (
-    <p className="rounded-xl border-2 border-dashed border-border p-6 text-center text-text-muted">
-      {children}
-    </p>
+    <Badge tone={tone} {...(title ? { title } : {})}>
+      {label}
+    </Badge>
+  );
+}
+
+/**
+ * Estado vazio: ícone, título curto, uma frase dizendo o que falta e, se houver, a ação
+ * que resolve. Nunca afirma que "está tudo certo" quando simplesmente não há dados.
+ */
+export function EmptyState({
+  icon: Icon = Inbox,
+  title,
+  children,
+  action,
+}: {
+  icon?: LucideIcon;
+  title?: string;
+  children?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-(--radius-card) border border-divider bg-surface px-6 py-10 text-center">
+      <span className="flex size-12 items-center justify-center rounded-full bg-primary-soft text-on-primary-soft">
+        <Icon aria-hidden size={24} />
+      </span>
+      {title && <p className="text-card font-semibold">{title}</p>}
+      {children && <p className="max-w-md text-text-muted">{children}</p>}
+      {action && <div className="mt-2">{action}</div>}
+    </div>
   );
 }
 
@@ -179,7 +307,10 @@ export function ResponsiveTable<T>({
     <>
       <ul className="flex flex-col gap-3 md:hidden">
         {rows.map((row) => (
-          <li key={rowKey(row)} className="rounded-2xl border border-divider bg-surface p-4">
+          <li
+            key={rowKey(row)}
+            className="rounded-(--radius-card) border border-divider bg-surface p-4 shadow-card"
+          >
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
               {columns.map((c) => (
                 <div key={c.label} className="contents">
@@ -191,31 +322,37 @@ export function ResponsiveTable<T>({
           </li>
         ))}
       </ul>
-      <table className="hidden w-full border-collapse overflow-hidden rounded-2xl border border-divider bg-surface md:table">
-        <thead>
-          <tr className="border-b border-divider bg-background text-left text-sm text-text-muted">
-            {columns.map((c) => (
-              <th key={c.label} className={`px-4 py-3 ${c.align === 'right' ? 'text-right' : ''}`}>
-                {c.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-divider last:border-0">
+      <div className="hidden overflow-x-auto rounded-(--radius-card) border border-divider bg-surface shadow-card md:block">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-divider bg-background text-left text-label text-text-muted">
               {columns.map((c) => (
-                <td
+                <th
                   key={c.label}
-                  className={`px-4 py-3 ${c.align === 'right' ? 'text-right tabular-nums' : ''}`}
+                  scope="col"
+                  className={`px-4 py-3 font-semibold ${c.align === 'right' ? 'text-right' : ''}`}
                 >
-                  {c.render(row)}
-                </td>
+                  {c.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={rowKey(row)} className="border-b border-divider last:border-0">
+                {columns.map((c) => (
+                  <td
+                    key={c.label}
+                    className={`px-4 py-3 ${c.align === 'right' ? 'text-right tabular-nums' : ''}`}
+                  >
+                    {c.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

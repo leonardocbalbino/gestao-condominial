@@ -4,6 +4,7 @@ import { CheckCircle2, LoaderCircle, TriangleAlert } from 'lucide-react';
 import { useActionState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import type { ActionState } from '@/lib/action-state';
+import { buttonClass, type ButtonStyle } from './ui';
 
 /**
  * Formulário ligado a uma server action. Mostra o resultado (sucesso ou erro) logo abaixo,
@@ -41,25 +42,19 @@ export function ActionForm({
 /** Botão de envio com estado "enviando" (desabilita para não enviar duas vezes). */
 export function SubmitButton({
   children,
-  variant = 'primary',
   className = '',
-}: {
+  ...style
+}: ButtonStyle & {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger';
   className?: string;
 }) {
   const { pending } = useFormStatus();
-  const tone =
-    variant === 'primary'
-      ? 'bg-primary text-on-primary'
-      : variant === 'danger'
-        ? 'bg-danger text-on-danger'
-        : 'bg-surface text-text border-2 border-border hover:border-primary hover:text-primary';
   return (
     <button
       type="submit"
       disabled={pending}
-      className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] px-5 py-3 font-bold ${tone} disabled:opacity-60 ${className}`}
+      aria-busy={pending}
+      className={`${buttonClass(style)} ${className}`}
     >
       {pending ? <LoaderCircle aria-hidden className="animate-spin" /> : null}
       {children}

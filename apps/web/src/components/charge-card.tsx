@@ -1,7 +1,7 @@
 import { formatBRL, formatDate, nomeDoMes, type MyChargeDto } from '@condo/contracts';
 import { CircleCheck, Clock, FileText, QrCode, TriangleAlert } from 'lucide-react';
 import { CopyButton } from './copy-button';
-import { Badge, ButtonLink, Card } from './ui';
+import { Badge, ButtonLink, buttonClass, Card } from './ui';
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
@@ -11,8 +11,7 @@ function prazo(dias: number): string {
   return `Vence em ${plural(dias, 'dia', 'dias')}`;
 }
 
-const secondaryLink =
-  'touch inline-flex min-h-13 items-center justify-center gap-2 rounded-[14px] border-2 border-border bg-surface px-4 py-3 font-bold text-text hover:border-primary hover:text-primary';
+const secondaryLink = buttonClass({ variant: 'secondary', fullWidth: true });
 
 /**
  * A taxa como o morador vê: linguagem do dia a dia, valor já atualizado e o Pix em
@@ -25,7 +24,7 @@ export function ChargeCard({ charge, unitId }: { charge: MyChargeDto; unitId: st
   const mes = nomeDoMes(charge.competencia);
 
   return (
-    <Card tone={atrasada ? 'attention' : aberta ? 'primary' : 'neutral'} className="p-6">
+    <Card tone={atrasada ? 'attention' : aberta ? 'primary' : 'neutral'}>
       <div className="mb-3">
         {atrasada ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-attention px-3 py-1 text-sm font-bold text-on-attention">
@@ -74,14 +73,15 @@ export function ChargeCard({ charge, unitId }: { charge: MyChargeDto; unitId: st
             <ButtonLink
               href={`/morador/pagar/${charge.id}?u=${unitId}`}
               variant={atrasada ? 'attention' : 'primary'}
-              className="min-h-14 w-full text-lg"
+              fullWidth
+              className="min-h-14 text-lg"
             >
               <QrCode aria-hidden /> {atrasada ? 'Pagar agora com Pix' : 'Pagar com Pix'}
             </ButtonLink>
           )}
           <div className="grid grid-cols-2 gap-3">
             {charge.pixCopiaCola && (
-              <CopyButton value={charge.pixCopiaCola} label="Copiar código" />
+              <CopyButton value={charge.pixCopiaCola} label="Copiar código" fullWidth />
             )}
             {charge.boletoUrl && (
               <a href={charge.boletoUrl} target="_blank" rel="noreferrer" className={secondaryLink}>
