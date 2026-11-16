@@ -69,6 +69,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Tudo menos login, arquivos estáticos e a rota de saúde.
-  matcher: ['/((?!entrar|_next/|favicon|saude).*)'],
+  // Tudo menos login, arquivos estáticos, a rota de saúde e o catálogo /dev (404 em produção).
+  matcher: ['/((?!entrar|_next/|favicon|saude|dev/).*)'],
 };
